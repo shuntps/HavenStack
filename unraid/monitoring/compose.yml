@@ -32,10 +32,10 @@ services:
     tmpfs:
       - /tmp
     networks:
-      monitoring: {}
+      monitoring_backend: {}
     stop_grace_period: 2m
     healthcheck:
-      test: ["CMD", "promtool", "check", "ready", "--url=http://localhost:9090"]
+      test: ["CMD", "promtool", "check", "ready", "--url=http://127.0.0.1:9090"]
       interval: 1m
       timeout: 10s
       retries: 3
@@ -56,16 +56,19 @@ services:
       - '--config.file=/etc/blackbox-exporter/blackbox.yml'
     environment:
       TZ: ${TZ}
+    extra_hosts:
+      - "nas-host:${NAS_IP}"
     volumes:
       - ./config/blackbox/blackbox.yml:/etc/blackbox-exporter/blackbox.yml:ro
     tmpfs:
       - /tmp
     networks:
-      monitoring: {}
-      proxy: {}
-      homepage: {}
+      monitoring_backend: {}
+      apps_backend: {}
+      servarr_backend: {}
+      homepage_backend: {}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:9115/-/healthy"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9115/-/healthy"]
       interval: 1m
       timeout: 10s
       retries: 3
@@ -101,10 +104,9 @@ services:
     tmpfs:
       - /tmp
     networks:
-      monitoring: {}
-      proxy: {}
+      monitoring_backend: {}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health"]
       interval: 1m
       timeout: 10s
       retries: 3
@@ -112,12 +114,15 @@ services:
     logging: *default-logging
 
 networks:
-  monitoring:
+  monitoring_backend:
     external: true
-    name: monitoring
-  proxy:
+    name: monitoring_backend
+  apps_backend:
     external: true
-    name: proxy
-  homepage:
+    name: apps_backend
+  servarr_backend:
     external: true
-    name: homepage
+    name: servarr_backend
+  homepage_backend:
+    external: true
+    name: homepage_backend

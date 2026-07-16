@@ -66,3 +66,7 @@ http:
       loadBalancer:
         servers:
           - url: 'http://nextcloud-aio-apache:11000/'
+        healthCheck:
+          path: '/status.php'
+          hostname: 'cloud.{{ env "DOMAIN" }}'
+          interval: '30s'

@@ -1,15 +1,5 @@
 http:
   routers:
-    arcane:
-      rule: 'Host(`arcane.{{ env "DOMAIN" }}`)'
-      entryPoints:
-        - 'web'
-      service: 'arcane@file'
-      middlewares:
-        - 'rate-limit@file'
-        - 'security-headers@file'
-        - 'authelia@file'
-
     server:
       rule: 'Host(`unraid.{{ env "DOMAIN" }}`)'
       entryPoints:
@@ -31,20 +21,12 @@ http:
         - 'authelia@file'
 
   services:
-    arcane:
-      loadBalancer:
-        servers:
-          - url: 'http://arcane:3552/'
-        healthCheck:
-          path: '/api/health'
-          interval: '30s'
-
     server:
       loadBalancer:
         servers:
-          - url: 'http://192.168.2.20:3480'
+          - url: 'http://{{ env "UNRAID_IP" }}:3480'
 
     nas:
       loadBalancer:
         servers:
-          - url: 'http://192.168.2.10:5080'
+          - url: 'http://{{ env "NAS_IP" }}:5080'

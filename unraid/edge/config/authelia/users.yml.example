@@ -1,0 +1,8 @@
+users:
+  admin:
+    disabled: false
+    displayname: Administrator
+    password: replace-with-an-argon2id-password-hash
+    email: admin@example.com
+    groups:
+      - admins

@@ -32,9 +32,9 @@ services:
       - /tmp
       - /app/.next/cache
     networks:
-      homepage: {}
+      homepage_backend: {}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
       interval: 1m
       timeout: 10s
       retries: 3
@@ -65,51 +65,19 @@ services:
     tmpfs:
       - /tmp
     networks:
-      proxy: {}
+      apps_backend: {}
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/alive >/dev/null"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/alive"]
       interval: 1m
       timeout: 10s
       retries: 3
       start_period: 30s
     logging: *default-logging
-
-  nextcloud-aio-mastercontainer:
-    image: ghcr.io/nextcloud-releases/all-in-one:latest
-    init: true
-    restart: unless-stopped
-    container_name: nextcloud-aio-mastercontainer
-    mem_limit: 1g
-    environment:
-      APACHE_PORT: 11000
-      APACHE_IP_BINDING: 0.0.0.0
-      APACHE_ADDITIONAL_NETWORK: proxy
-      NEXTCLOUD_DATADIR: ${CLOUD_PATH}
-      NEXTCLOUD_MEMORY_LIMIT: 1024M
-      SKIP_DOMAIN_VALIDATION: "false"
-    ports:
-      - "8080:8080"
-    volumes:
-      - nextcloud_aio_mastercontainer:/mnt/docker-aio-config
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      proxy: {}
-    healthcheck:
-      test: ["CMD", "/healthcheck.sh"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    logging: *default-logging
-
-volumes:
-  nextcloud_aio_mastercontainer:
-    name: nextcloud_aio_mastercontainer
 
 networks:
-  proxy:
+  apps_backend:
     external: true
-    name: proxy
-  homepage:
+    name: apps_backend
+  homepage_backend:
     external: true
-    name: homepage
+    name: homepage_backend

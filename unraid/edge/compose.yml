@@ -8,34 +8,6 @@ x-logging: &default-logging
     compress: "true"
 
 services:
-  socket-proxy:
-    image: tecnativa/docker-socket-proxy:v0.4.2
-    container_name: socket-proxy
-    restart: unless-stopped
-    mem_limit: 64m
-    read_only: true
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      CONTAINERS: 1
-      LOG_LEVEL: warning
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    tmpfs:
-      - /run
-      - /tmp
-    networks:
-      api: {}
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:2375/_ping"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    logging: *default-logging
-
   cloudflared:
     image: cloudflare/cloudflared:2026.7.0
     container_name: cloudflared
@@ -50,11 +22,11 @@ services:
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARED_TUNNEL_TOKEN}
     networks:
-      tunnel: {}
-      monitoring: {}
+      edge_ingress: {}
+      monitoring_backend: {}
     healthcheck:
       test:
-        ["CMD", "cloudflared", "tunnel", "--metrics", "localhost:2000", "ready"]
+        ["CMD", "cloudflared", "tunnel", "--metrics", "127.0.0.1:2000", "ready"]
       interval: 1m
       timeout: 10s
       retries: 3
@@ -77,7 +49,7 @@ services:
       DOMAINS: ${CLOUDFLARE_DDNS_DOMAINS}
       IP6_PROVIDER: none
     networks:
-      egress: {}
+      ddns_egress: {}
     logging: *default-logging
 
   traefik:
@@ -87,9 +59,6 @@ services:
     mem_limit: 256m
     user: ${UID}:${GID}
     read_only: true
-    depends_on:
-      socket-proxy:
-        condition: service_healthy
     cap_drop:
       - ALL
     security_opt:
@@ -97,16 +66,19 @@ services:
     environment:
       TZ: ${TZ}
       DOMAIN: ${DOMAIN}
+      UNRAID_IP: ${UNRAID_IP}
+      NAS_IP: ${NAS_IP}
     volumes:
       - ./config/traefik:/etc/traefik:ro
     tmpfs:
       - /tmp
     networks:
-      tunnel: {}
-      proxy: {}
-      api: {}
-      homepage: {}
-      monitoring: {}
+      edge_ingress: {}
+      auth_backend: {}
+      apps_backend: {}
+      servarr_backend: {}
+      homepage_backend: {}
+      monitoring_backend: {}
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
       interval: 1m
@@ -140,10 +112,10 @@ services:
     tmpfs:
       - /tmp
     networks:
-      proxy: {}
-      monitoring: {}
+      auth_backend: {}
+      monitoring_backend: {}
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:9091/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9091/api/health || exit 1"]
       interval: 1m
       timeout: 10s
       retries: 3
@@ -151,42 +123,48 @@ services:
     logging: *default-logging
 
 networks:
-  tunnel:
+  edge_ingress:
     driver: bridge
-    name: tunnel
+    name: edge_ingress
     ipam:
       config:
         - subnet: 10.88.10.0/24
-  api:
+  auth_backend:
     driver: bridge
-    name: api
+    name: auth_backend
     internal: true
     ipam:
       config:
         - subnet: 10.88.20.0/24
-  proxy:
+  apps_backend:
     driver: bridge
-    name: proxy
+    name: apps_backend
     ipam:
       config:
         - subnet: 10.88.30.0/24
-  egress:
+  servarr_backend:
     driver: bridge
-    name: egress
+    name: servarr_backend
     ipam:
       config:
         - subnet: 10.88.40.0/24
-  homepage:
+  homepage_backend:
     driver: bridge
-    name: homepage
+    name: homepage_backend
     internal: true
     ipam:
       config:
         - subnet: 10.88.50.0/24
-  monitoring:
+  monitoring_backend:
     driver: bridge
-    name: monitoring
+    name: monitoring_backend
     internal: true
     ipam:
       config:
         - subnet: 10.88.60.0/24
+  ddns_egress:
+    driver: bridge
+    name: ddns_egress
+    ipam:
+      config:
+        - subnet: 10.88.70.0/24

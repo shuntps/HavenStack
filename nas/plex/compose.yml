@@ -31,7 +31,7 @@ services:
       - ${MEDIA_PATH}:/media
     network_mode: host
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:32400/identity"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:32400/identity"]
       interval: 1m
       timeout: 10s
       retries: 3

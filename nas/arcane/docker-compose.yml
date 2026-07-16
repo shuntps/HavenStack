@@ -25,7 +25,7 @@ services:
     networks:
       arcane: {}
     ports:
-      - "3552:3552/tcp"
+      - "${NAS_IP}:3552:3552/tcp"
     healthcheck:
       test: ["CMD", "/app/arcane", "health"]
       interval: 1m

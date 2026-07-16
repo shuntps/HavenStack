@@ -1,35 +1,42 @@
 # HavenStack
 
-**Your services. Your data. Your digital haven.**
+<p align="center">
+  <img src="docs/images/havenstack-banner.png" alt="HavenStack - Secure, private, self-hosted infrastructure" width="100%">
+</p>
 
-HavenStack is a security-first, modular homelab built by [Shunt](https://github.com/shuntps). It uses Docker Compose to run media automation, private cloud services, secure remote access, and monitoring across Unraid and NAS infrastructure.
+<p align="center">
+  A modular, security-focused homelab built with Docker Compose across Unraid and NAS infrastructure.
+</p>
 
-## Features
+## Overview
 
-- Secure ingress with Traefik, Authelia, and Cloudflare Tunnel
-- Media streaming and automation with Plex and the Servarr ecosystem
-- Private cloud and password management with Nextcloud and Vaultwarden
-- Monitoring and dashboards with Prometheus, Grafana, and Blackbox Exporter
-- Isolated Docker networks, health checks, resource limits, and hardened containers
-- Modular Compose stacks that can be deployed and maintained independently
+- Cloudflare Tunnel ingress through Traefik
+- Central authentication and access policies with Authelia
+- Private applications including Nextcloud and Vaultwarden
+- Media automation with the Servarr ecosystem and VPN-protected qBittorrent
+- Monitoring with Prometheus, Grafana, and Blackbox Exporter
+- Segmented Docker networks, health checks, resource limits, and hardened containers
 
-## Included services
+## Stacks
 
-| Stack | Services |
-| --- | --- |
-| Edge | Traefik, Authelia, Cloudflare Tunnel, Cloudflare DDNS, Docker Socket Proxy |
-| Apps | Homepage, Vaultwarden, Nextcloud AIO |
-| Media | Plex, qBittorrent, Prowlarr, Radarr, Sonarr, Seerr, Profilarr |
-| Monitoring | Prometheus, Grafana, Blackbox Exporter |
-| Management | Arcane |
+| Location | Stack | Services |
+| --- | --- | --- |
+| Unraid | Edge | Traefik, Authelia, Cloudflare Tunnel, Cloudflare DDNS |
+| Unraid | Apps | Homepage, Vaultwarden |
+| Unraid | Nextcloud | Apache, Nextcloud, PostgreSQL, Redis, Notify Push |
+| Unraid | Servarr | qBittorrent VPN, Prowlarr, Radarr, Sonarr, Seerr, Profilarr |
+| Unraid | Monitoring | Prometheus, Grafana, Blackbox Exporter |
+| NAS | Media | Plex |
+| NAS | Management | Arcane |
 
-## Repository structure
+## Repository layout
 
 ```text
 HavenStack/
 ├── unraid/
 │   ├── edge/
 │   ├── apps/
+│   ├── nextcloud/
 │   ├── servarr/
 │   └── monitoring/
 └── nas/
@@ -37,45 +44,42 @@ HavenStack/
     └── arcane/
 ```
 
-## Getting started
+## Deployment
 
-1. Clone the repository:
+Create and configure the environment files before starting any stack:
 
-   ```bash
-   git clone https://github.com/shuntps/HavenStack.git
-   cd HavenStack
-   ```
+```bash
+cp unraid/.env.example unraid/.env
+cp nas/.env.example nas/.env
+```
 
-2. Create the environment file for each server, then configure its paths, user IDs, domain, and secrets:
+Deploy the Unraid stacks in order:
 
-   ```bash
-   cp unraid/.env.example unraid/.env
-   cp nas/.env.example nas/.env
-   ```
+```bash
+docker compose --env-file unraid/.env -f unraid/edge/compose.yml up -d
+docker compose --env-file unraid/.env -f unraid/apps/compose.yml up -d
+docker compose --env-file unraid/.env -f unraid/nextcloud/compose.yml up -d
+docker compose --env-file unraid/.env -f unraid/servarr/compose.yml up -d
+docker compose --env-file unraid/.env -f unraid/monitoring/compose.yml up -d
+```
 
-3. Start the edge stack first, followed by the stacks you want to deploy:
+Deploy the required NAS stacks separately:
 
-   ```bash
-   docker compose --env-file unraid/.env -f unraid/edge/compose.yml up -d
-   docker compose --env-file unraid/.env -f unraid/apps/compose.yml up -d
-   docker compose --env-file unraid/.env -f unraid/monitoring/compose.yml up -d
-   docker compose --env-file unraid/.env -f unraid/servarr/compose.yml up -d
-   ```
+```bash
+docker compose --env-file nas/.env -f nas/plex/compose.yml up -d
+docker compose --env-file nas/.env -f nas/arcane/docker-compose.yml up -d
+```
 
-   On the NAS, deploy the required stacks with its own environment file:
+Review all paths, user IDs, network ranges, domains, and secrets before deployment. Never commit populated environment files.
 
-   ```bash
-   docker compose --env-file nas/.env -f nas/plex/compose.yml up -d
-   docker compose --env-file nas/.env -f nas/arcane/docker-compose.yml up -d
-   ```
+### Required local configuration
 
-> [!IMPORTANT]
-> Review all paths, credentials, network ranges, and domain settings before deployment. Never commit secrets or populated environment files.
+- Copy `unraid/edge/config/authelia/users.yml.example` to `users.yml` and replace the example password with an Argon2id hash.
+- Place one provider-supplied OpenVPN profile and its certificates in the qBittorrent `/config/openvpn` directory.
+- Ensure the configured Nextcloud data path exists and is writable before starting the stack.
+
+These files and runtime data are intentionally excluded from Git.
 
 ## License
 
-This project is available under the terms of the [LICENSE](LICENSE) file.
-
----
-
-Created and maintained by [Shunt](https://github.com/shuntps).
+Licensed under the terms of the [LICENSE](LICENSE) file.

@@ -14,5 +14,24 @@ instructions/
 users.yml
 notification.txt
 
+# Certificates, VPN profiles, and private keys
+*.key
+*.pem
+*.p12
+*.pfx
+*.ovpn
+**/openvpn/
+**/wireguard/
+
+# Runtime databases, backups, and local overrides
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.bak
+*.backup
+*.local
+
 # Local build artifacts
 logs/
+*.log

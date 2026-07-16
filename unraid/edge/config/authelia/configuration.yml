@@ -88,12 +88,12 @@ access_control:
     - domain: 'grafana.{{ env "DOMAIN" }}'
       policy: 'deny'
 
-    - domain: 'arcane.{{ env "DOMAIN" }}'
+    - domain: 'qbittorrent.{{ env "DOMAIN" }}'
       subject:
         - 'group:admins'
       policy: 'two_factor'
 
-    - domain: 'arcane.{{ env "DOMAIN" }}'
+    - domain: 'qbittorrent.{{ env "DOMAIN" }}'
       policy: 'deny'
 
     - domain: 'vault.{{ env "DOMAIN" }}'

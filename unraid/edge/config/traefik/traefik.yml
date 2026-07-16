@@ -19,10 +19,6 @@ entryPoints:
         - '10.88.10.0/24'
 
 providers:
-  docker:
-    exposedByDefault: false
-    endpoint: 'tcp://socket-proxy:2375'
-    network: 'proxy'
   file:
     directory: '/etc/traefik/dynamic'
     watch: true
