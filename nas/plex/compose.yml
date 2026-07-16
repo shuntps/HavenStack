@@ -14,7 +14,7 @@ x-media-env: &media-env
 
 services:
   plex:
-    image: linuxserver/plex:1.43.2
+    image: linuxserver/plex:1.43.3
     container_name: plex
     restart: unless-stopped
     mem_limit: 1g

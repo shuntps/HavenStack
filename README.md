@@ -46,19 +46,27 @@ HavenStack/
    cd HavenStack
    ```
 
-2. Create your local environment file, then configure your domain, paths, user IDs, and secrets:
+2. Create the environment file for each server, then configure its paths, user IDs, domain, and secrets:
 
    ```bash
-   cp .env.example .env
+   cp unraid/.env.example unraid/.env
+   cp nas/.env.example nas/.env
    ```
 
 3. Start the edge stack first, followed by the stacks you want to deploy:
 
    ```bash
-   docker compose -f unraid/edge/compose.yml up -d
-   docker compose -f unraid/apps/compose.yml up -d
-   docker compose -f unraid/monitoring/compose.yml up -d
-   docker compose -f unraid/servarr/compose.yml up -d
+   docker compose --env-file unraid/.env -f unraid/edge/compose.yml up -d
+   docker compose --env-file unraid/.env -f unraid/apps/compose.yml up -d
+   docker compose --env-file unraid/.env -f unraid/monitoring/compose.yml up -d
+   docker compose --env-file unraid/.env -f unraid/servarr/compose.yml up -d
+   ```
+
+   On the NAS, deploy the required stacks with its own environment file:
+
+   ```bash
+   docker compose --env-file nas/.env -f nas/plex/compose.yml up -d
+   docker compose --env-file nas/.env -f nas/arcane/docker-compose.yml up -d
    ```
 
 > [!IMPORTANT]
