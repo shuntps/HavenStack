@@ -35,6 +35,7 @@ services:
       VPN_CLIENT: ${VPN_CLIENT}
       ENABLE_STARTUP_SCRIPTS: "no"
       ENABLE_PRIVOXY: "yes"
+      ENABLE_SOCKS: "no"
       STRICT_PORT_FORWARD: "yes"
       USERSPACE_WIREGUARD: "no"
       LAN_NETWORK: ${LAN_NETWORK}
