@@ -28,7 +28,7 @@ services:
       - /dev/dri:/dev/dri
     volumes:
       - ${DATA_PATH}/plex:/config
-      - ${MEDIA_PATH}:/media:rslave
+      - ${MEDIA_PATH}:/media
     network_mode: host
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:32400/identity"]
