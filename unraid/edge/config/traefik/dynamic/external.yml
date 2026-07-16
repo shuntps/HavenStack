@@ -1,0 +1,50 @@
+http:
+  routers:
+    arcane:
+      rule: 'Host(`arcane.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'arcane@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+        - 'authelia@file'
+
+    server:
+      rule: 'Host(`unraid.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - "web"
+      service: 'server@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+        - 'authelia@file'
+
+    nas:
+      rule: 'Host(`nas.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - "web"
+      service: 'nas@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+        - 'authelia@file'
+
+  services:
+    arcane:
+      loadBalancer:
+        servers:
+          - url: 'http://arcane:3552/'
+        healthCheck:
+          path: '/api/health'
+          interval: '30s'
+
+    server:
+      loadBalancer:
+        servers:
+          - url: 'http://192.168.2.20:3480'
+
+    nas:
+      loadBalancer:
+        servers:
+          - url: 'http://192.168.2.10:5080'

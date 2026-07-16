@@ -1,0 +1,123 @@
+name: monitoring
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: "5"
+    compress: "true"
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.13.1
+    container_name: prometheus
+    restart: unless-stopped
+    mem_limit: 512m
+    user: ${UID}:${GID}
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.retention.size=10GB'
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ${APPDATA_PATH}/prometheus:/prometheus
+    tmpfs:
+      - /tmp
+    networks:
+      monitoring: {}
+    stop_grace_period: 2m
+    healthcheck:
+      test: ["CMD", "promtool", "check", "ready", "--url=http://localhost:9090"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  blackbox-exporter:
+    image: quay.io/prometheus/blackbox-exporter:v0.28.0
+    container_name: blackbox-exporter
+    restart: unless-stopped
+    mem_limit: 64m
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - '--config.file=/etc/blackbox-exporter/blackbox.yml'
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ./config/blackbox/blackbox.yml:/etc/blackbox-exporter/blackbox.yml:ro
+    tmpfs:
+      - /tmp
+    networks:
+      monitoring: {}
+      proxy: {}
+      homepage: {}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9115/-/healthy"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  grafana:
+    image: grafana/grafana:13.1.0
+    container_name: grafana
+    restart: unless-stopped
+    mem_limit: 768m
+    user: ${UID}:${GID}
+    read_only: true
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      TZ: ${TZ}
+      GF_SERVER_ROOT_URL: https://grafana.${DOMAIN}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ${APPDATA_PATH}/grafana:/var/lib/grafana
+    tmpfs:
+      - /tmp
+    networks:
+      monitoring: {}
+      proxy: {}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+networks:
+  monitoring:
+    external: true
+    name: monitoring
+  proxy:
+    external: true
+    name: proxy
+  homepage:
+    external: true
+    name: homepage

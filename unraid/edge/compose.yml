@@ -1,0 +1,192 @@
+name: edge
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: "5"
+    compress: "true"
+
+services:
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:v0.4.2
+    container_name: socket-proxy
+    restart: unless-stopped
+    mem_limit: 64m
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      CONTAINERS: 1
+      LOG_LEVEL: warning
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    tmpfs:
+      - /run
+      - /tmp
+    networks:
+      api: {}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:2375/_ping"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.7.0
+    container_name: cloudflared
+    restart: unless-stopped
+    mem_limit: 128m
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARED_TUNNEL_TOKEN}
+    networks:
+      tunnel: {}
+      monitoring: {}
+    healthcheck:
+      test:
+        ["CMD", "cloudflared", "tunnel", "--metrics", "localhost:2000", "ready"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  cloudflare-ddns:
+    image: favonia/cloudflare-ddns:1.16.2
+    container_name: cloudflare-ddns
+    restart: unless-stopped
+    mem_limit: 64m
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      TZ: ${TZ}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_DDNS_API_TOKEN}
+      DOMAINS: ${CLOUDFLARE_DDNS_DOMAINS}
+      IP6_PROVIDER: none
+    networks:
+      egress: {}
+    logging: *default-logging
+
+  traefik:
+    image: traefik:v3.7.6
+    container_name: traefik
+    restart: unless-stopped
+    mem_limit: 256m
+    user: ${UID}:${GID}
+    read_only: true
+    depends_on:
+      socket-proxy:
+        condition: service_healthy
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      TZ: ${TZ}
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./config/traefik:/etc/traefik:ro
+    tmpfs:
+      - /tmp
+    networks:
+      tunnel: {}
+      proxy: {}
+      api: {}
+      homepage: {}
+      monitoring: {}
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  authelia:
+    image: authelia/authelia:4.39.20
+    container_name: authelia
+    restart: unless-stopped
+    mem_limit: 256m
+    user: ${UID}:${GID}
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    command: authelia --config /config/configuration.yml --config.experimental.filters template
+    environment:
+      TZ: ${TZ}
+      DOMAIN: ${DOMAIN}
+      DOMAIN_SLD: ${DOMAIN_SLD}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET}
+      AUTH_STORAGE_ENCRYPTION_KEY: ${AUTH_STORAGE_ENCRYPTION_KEY}
+    volumes:
+      - ./config/authelia:/config
+      - ${APPDATA_PATH}/authelia:/data
+    tmpfs:
+      - /tmp
+    networks:
+      proxy: {}
+      monitoring: {}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9091/api/health || exit 1"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+networks:
+  tunnel:
+    driver: bridge
+    name: tunnel
+    ipam:
+      config:
+        - subnet: 10.88.10.0/24
+  api:
+    driver: bridge
+    name: api
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.88.20.0/24
+  proxy:
+    driver: bridge
+    name: proxy
+    ipam:
+      config:
+        - subnet: 10.88.30.0/24
+  egress:
+    driver: bridge
+    name: egress
+    ipam:
+      config:
+        - subnet: 10.88.40.0/24
+  homepage:
+    driver: bridge
+    name: homepage
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.88.50.0/24
+  monitoring:
+    driver: bridge
+    name: monitoring
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.88.60.0/24

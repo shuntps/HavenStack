@@ -1,0 +1,44 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: "5"
+    compress: "true"
+
+services:
+  arcane:
+    image: ghcr.io/getarcaneapp/arcane:latest
+    container_name: arcane
+    restart: unless-stopped
+    mem_limit: 512m
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      TZ: ${TZ}
+      PUID: ${UID}
+      PGID: ${GID}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ${DATA_PATH}/arcane:/app/data
+      - ${PROJECT_PATH}/projects:/app/data/projects
+    networks:
+      arcane: {}
+    ports:
+      - "3552:3552/tcp"
+    healthcheck:
+      test: ["CMD", "/app/arcane", "health"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+networks:
+  arcane:
+    driver: bridge
+    name: arcane
+    ipam:
+      config:
+        - subnet: 10.68.10.0/24

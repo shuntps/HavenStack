@@ -1,0 +1,39 @@
+name: plex
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: "5"
+    compress: "true"
+
+x-media-env: &media-env
+  PUID: ${UID}
+  PGID: ${GID}
+  TZ: ${TZ}
+
+services:
+  plex:
+    image: linuxserver/plex:1.43.2
+    container_name: plex
+    restart: unless-stopped
+    mem_limit: 1g
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      <<: *media-env
+      VERSION: docker
+      UMASK: "022"
+    devices:
+      - /dev/dri:/dev/dri
+    volumes:
+      - ${DATA_PATH}/plex:/config
+      - ${MEDIA_PATH}:/media:rslave
+    network_mode: host
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:32400/identity"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging

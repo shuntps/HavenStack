@@ -1,0 +1,96 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+  external_labels:
+    environment: homelab
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  - job_name: traefik
+    static_configs:
+      - targets:
+          - traefik:8084
+
+  - job_name: authelia
+    static_configs:
+      - targets:
+          - authelia:9959
+
+  - job_name: cloudflared
+    static_configs:
+      - targets:
+          - cloudflared:2000
+
+  - job_name: blackbox-exporter
+    static_configs:
+      - targets:
+          - blackbox-exporter:9115
+
+  - job_name: blackbox-http
+    metrics_path: /probe
+    params:
+      module:
+        - http_2xx
+    static_configs:
+      - targets:
+          - http://prometheus:9090/-/ready
+        labels:
+          service: prometheus
+      - targets:
+          - http://traefik:8082/ping
+        labels:
+          service: traefik
+      - targets:
+          - http://cloudflared:2000/ready
+        labels:
+          service: cloudflared
+      - targets:
+          - http://authelia:9091/api/health
+        labels:
+          service: authelia
+      - targets:
+          - http://vaultwarden:8080/alive
+        labels:
+          service: vaultwarden
+      - targets:
+          - http://homepage:3000/api/health
+        labels:
+          service: homepage
+      - targets:
+          - http://qbittorrent:8090
+        labels:
+          service: qbittorrent
+      - targets:
+          - http://prowlarr:9696/ping
+        labels:
+          service: prowlarr
+      - targets:
+          - http://radarr:7878/ping
+        labels:
+          service: radarr
+      - targets:
+          - http://seerr:5055/api/v1/status
+        labels:
+          service: seerr
+      - targets:
+          - http://sonarr:8989/ping
+        labels:
+          service: sonarr
+      - targets:
+          - http://profilarr:6868
+        labels:
+          service: profilarr
+    relabel_configs:
+      - source_labels:
+          - __address__
+        target_label: __param_target
+      - source_labels:
+          - __param_target
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

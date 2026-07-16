@@ -1,0 +1,115 @@
+name: apps
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: "5"
+    compress: "true"
+
+services:
+  homepage:
+    image: shuntps/homepage:1.1.0
+    container_name: homepage
+    restart: unless-stopped
+    mem_limit: 256m
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      TZ: ${TZ}
+      PORT: 3000
+      SITE_DOMAIN: ${DOMAIN}
+      SITE_DESCRIPTION: ${SITE_DESCRIPTION}
+      SITE_KEYWORDS: ${SITE_KEYWORDS}
+      SITE_AUTHOR: ${DOMAIN_SLD}
+      SITE_LOCALE: ${SITE_LOCALE}
+      SECURITY_TXT_EXPIRES: ${SECURITY_TXT_EXPIRES}
+      SECURITY_TXT_CONTACT: ${SECURITY_TXT_CONTACT}
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    networks:
+      homepage: {}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  vaultwarden:
+    image: vaultwarden/server:1.36.0
+    container_name: vaultwarden
+    restart: unless-stopped
+    mem_limit: 256m
+    user: ${UID}:${GID}
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      TZ: ${TZ}
+      DOMAIN: https://vault.${DOMAIN}
+      ROCKET_ADDRESS: 0.0.0.0
+      ROCKET_PORT: 8080
+      SIGNUPS_ALLOWED: "false"
+      INVITATIONS_ALLOWED: "false"
+      ADMIN_TOKEN: ${VAULTWARDEN_ADMIN_TOKEN}
+    volumes:
+      - ${APPDATA_PATH}/vaultwarden:/data
+    tmpfs:
+      - /tmp
+    networks:
+      proxy: {}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/alive >/dev/null"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  nextcloud-aio-mastercontainer:
+    image: ghcr.io/nextcloud-releases/all-in-one:latest
+    init: true
+    restart: unless-stopped
+    container_name: nextcloud-aio-mastercontainer
+    mem_limit: 1g
+    environment:
+      APACHE_PORT: 11000
+      APACHE_IP_BINDING: 0.0.0.0
+      APACHE_ADDITIONAL_NETWORK: proxy
+      NEXTCLOUD_DATADIR: ${CLOUD_PATH}
+      NEXTCLOUD_MEMORY_LIMIT: 1024M
+      SKIP_DOMAIN_VALIDATION: "false"
+    ports:
+      - "8080:8080"
+    volumes:
+      - nextcloud_aio_mastercontainer:/mnt/docker-aio-config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      proxy: {}
+    healthcheck:
+      test: ["CMD", "/healthcheck.sh"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+volumes:
+  nextcloud_aio_mastercontainer:
+    name: nextcloud_aio_mastercontainer
+
+networks:
+  proxy:
+    external: true
+    name: proxy
+  homepage:
+    external: true
+    name: homepage

@@ -1,0 +1,68 @@
+http:
+  routers:
+    homepage:
+      rule: 'Host(`{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'homepage@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+
+    homepage-www:
+      rule: 'Host(`www.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'homepage@file'
+      middlewares:
+        - 'redirect-www@file'
+
+    vaultwarden-admin:
+      rule: 'Host(`vault.{{ env "DOMAIN" }}`) && (Path(`/admin`) || PathPrefix(`/admin/`))'
+      priority: 100
+      entryPoints:
+        - 'web'
+      service: 'vaultwarden@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+        - 'authelia@file'
+
+    vaultwarden:
+      rule: 'Host(`vault.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'vaultwarden@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+
+    nextcloud:
+      rule: 'Host(`cloud.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'nextcloud@file'
+      middlewares:
+        - 'security-headers@file'
+
+  services:
+    homepage:
+      loadBalancer:
+        servers:
+          - url: 'http://homepage:3000/'
+        healthCheck:
+          path: '/api/health'
+          interval: '30s'
+
+    vaultwarden:
+      loadBalancer:
+        servers:
+          - url: 'http://vaultwarden:8080/'
+        healthCheck:
+          path: '/alive'
+          interval: '30s'
+
+    nextcloud:
+      loadBalancer:
+        servers:
+          - url: 'http://nextcloud-aio-apache:11000/'

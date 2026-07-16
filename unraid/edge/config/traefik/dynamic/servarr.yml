@@ -1,0 +1,110 @@
+http:
+  routers:
+    qbittorrent:
+      rule: 'Host(`qbittorrent.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'qbittorrent@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+        - 'authelia@file'
+
+    prowlarr:
+      rule: 'Host(`prowlarr.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'prowlarr@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+        - 'authelia@file'
+
+    radarr:
+      rule: 'Host(`radarr.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'radarr@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+        - 'authelia@file'
+
+    seerr:
+      rule: 'Host(`seerr.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'seerr@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+        - 'authelia@file'
+
+    sonarr:
+      rule: 'Host(`sonarr.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'sonarr@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+        - 'authelia@file'
+
+    profilarr:
+      rule: 'Host(`profilarr.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'profilarr@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+        - 'authelia@file'
+
+  services:
+    qbittorrent:
+      loadBalancer:
+        servers:
+          - url: 'http://qbittorrent:8090/'
+        healthCheck:
+          path: '/'
+          interval: '30s'
+
+    prowlarr:
+      loadBalancer:
+        servers:
+          - url: 'http://prowlarr:9696/'
+        healthCheck:
+          path: '/ping'
+          interval: '30s'
+
+    radarr:
+      loadBalancer:
+        servers:
+          - url: 'http://radarr:7878/'
+        healthCheck:
+          path: '/ping'
+          interval: '30s'
+
+    seerr:
+      loadBalancer:
+        servers:
+          - url: 'http://seerr:5055/'
+        healthCheck:
+          path: '/api/v1/status'
+          interval: '30s'
+
+    sonarr:
+      loadBalancer:
+        servers:
+          - url: 'http://sonarr:8989/'
+        healthCheck:
+          path: '/ping'
+          interval: '30s'
+
+    profilarr:
+      loadBalancer:
+        servers:
+          - url: 'http://profilarr:6868/'
+        healthCheck:
+          path: '/api/v1/health'
+          interval: '30s'

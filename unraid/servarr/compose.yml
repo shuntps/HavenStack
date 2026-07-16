@@ -1,0 +1,173 @@
+name: servarr
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: "5"
+    compress: "true"
+
+x-media-env: &media-env
+  PUID: ${UID}
+  PGID: ${GID}
+  TZ: ${TZ}
+
+x-nas_media-env: &nas-media-env
+  PUID: ${NAS_UID}
+  PGID: ${NAS_GID}
+  TZ: ${TZ}
+
+services:
+  qbittorrent:
+    image: linuxserver/qbittorrent:5.2.3
+    container_name: qbittorrent
+    restart: unless-stopped
+    mem_limit: 512m
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      <<: *nas-media-env
+      WEBUI_PORT: 8090
+      TORRENTING_PORT: 6881
+    volumes:
+      - ${APPDATA_PATH}/qbittorrent:/config
+      - ${HOMELAB_PATH}:/data:rslave
+    networks:
+      proxy: {}
+    ports:
+      - "6881:6881"
+      - "6881:6881/udp"
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8090"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+
+  prowlarr:
+    image: linuxserver/prowlarr:2.4.0
+    container_name: prowlarr
+    restart: unless-stopped
+    mem_limit: 256m
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      <<: *media-env
+    volumes:
+      - ${APPDATA_PATH}/prowlarr:/config
+    networks:
+      proxy: {}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9696/ping"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging: *default-logging
+
+  radarr:
+    image: linuxserver/radarr:6.3.0
+    container_name: radarr
+    restart: unless-stopped
+    mem_limit: 1g
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      <<: *nas-media-env
+    volumes:
+      - ${APPDATA_PATH}/radarr:/config
+      - ${HOMELAB_PATH}:/data:rslave
+    networks:
+      proxy: {}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:7878/ping"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging: *default-logging
+
+  sonarr:
+    image: linuxserver/sonarr:4.0.19
+    container_name: sonarr
+    restart: unless-stopped
+    mem_limit: 1g
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      <<: *nas-media-env
+    volumes:
+      - ${APPDATA_PATH}/sonarr:/config
+      - ${HOMELAB_PATH}:/data:rslave
+    networks:
+      proxy: {}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8989/ping"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging: *default-logging
+
+  seerr:
+    image: ghcr.io/seerr-team/seerr:v3.3.0
+    container_name: seerr
+    restart: unless-stopped
+    mem_limit: 1g
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      TZ: ${TZ}
+      LOG_LEVEL: info
+    volumes:
+      - ${APPDATA_PATH}/seerr:/app/config
+    tmpfs:
+      - /tmp
+    networks:
+      proxy: {}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5055/api/v1/status"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging: *default-logging
+
+  profilarr:
+    image: ghcr.io/dictionarry-hub/profilarr:2.0.9
+    container_name: profilarr
+    restart: unless-stopped
+    mem_limit: 768m
+    user: "${UID}:${GID}"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      TZ: ${TZ}
+      HOME: /config
+      ORIGIN: https://profilarr.${DOMAIN}
+    volumes:
+      - ${APPDATA_PATH}/profilarr:/config
+    tmpfs:
+      - /tmp
+    networks:
+      proxy: {}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:6868/api/v1/health"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging: *default-logging
+
+networks:
+  proxy:
+    external: true
+    name: proxy

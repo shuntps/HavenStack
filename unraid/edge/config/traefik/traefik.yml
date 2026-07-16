@@ -1,0 +1,52 @@
+# yaml-language-server: $schema=https://www.schemastore.org/traefik-v3.json
+
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+entryPoints:
+  health:
+    address: ':8082/tcp'
+
+  metrics:
+    address: ':8084/tcp'
+
+  web:
+    address: ':8080/tcp'
+    forwardedHeaders:
+      insecure: false
+      trustedIPs:
+        - '10.88.10.0/24'
+
+providers:
+  docker:
+    exposedByDefault: false
+    endpoint: 'tcp://socket-proxy:2375'
+    network: 'proxy'
+  file:
+    directory: '/etc/traefik/dynamic'
+    watch: true
+
+ping:
+  entryPoint: 'health'
+
+metrics:
+  addInternals: true
+  prometheus:
+    entryPoint: 'metrics'
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+
+api:
+  dashboard: true
+  debug: false
+  insecure: false
+
+log:
+  level: 'INFO'
+  format: 'json'
+
+accessLog:
+  format: 'json'
+  bufferingSize: 100
