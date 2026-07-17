@@ -1,0 +1,65 @@
+name: Bug report
+description: A stack, workflow, or documented procedure does not behave as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting, check the [troubleshooting guide](https://github.com/shuntps/HavenStack/blob/main/docs/operations/troubleshooting.md).
+
+        **Remove every password, token, cookie, API key, and private key — without exception.**
+        Domains, IPs, usernames, and paths may be replaced with consistent placeholders such as `example.com`.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Edge (Traefik, Authelia, cloudflared, DDNS)
+        - Apps (Homepage, Vaultwarden)
+        - Nextcloud
+        - Servarr / qBittorrent
+        - Monitoring (Prometheus, Grafana, Blackbox)
+        - NAS (Plex, Arcane)
+        - Documentation
+        - CI / repository tooling
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Git commit or release tag
+      placeholder: "v1.0.0 or 2306faa"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect, and what happened instead?
+      description: Include the documented behavior you relied on, if any.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs and status output
+      description: |
+        For example `docker compose ps --all` and a short log excerpt starting before the first error.
+      render: text
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Confirmations
+      options:
+        - label: I removed all secrets, tokens, and credentials from this report.
+          required: true
+        - label: I checked the troubleshooting guide and existing issues.
+          required: true
