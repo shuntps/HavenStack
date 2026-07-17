@@ -169,7 +169,7 @@ services:
       WHITEBOARD_ENABLED: "no"
     volumes:
       - nextcloud_aio_nextcloud:/var/www/html
-      - ${CLOUD_PATH}:/mnt/ncdata
+      - ${CLOUD_PATH}:/mnt/ncdata:rslave
     networks:
       nextcloud_backend: {}
       nextcloud_egress: {}
