@@ -39,6 +39,7 @@ After the base deployment, use the [stack guide index](stacks/README.md) for det
 - [Updating](operations/updating.md)
 - [Rollback](operations/rollback.md)
 - [Troubleshooting](operations/troubleshooting.md)
+- [Frequently asked questions](operations/faq.md)
 
 ## Security
 
