@@ -1,0 +1,50 @@
+name: Create GitHub Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Validate Docker Compose files
+        run: |
+          docker compose --env-file unraid/.env.example \
+            -f unraid/edge/compose.yml config --quiet
+
+          docker compose --env-file unraid/.env.example \
+            -f unraid/apps/compose.yml config --quiet
+
+          docker compose --env-file unraid/.env.example \
+            -f unraid/nextcloud/compose.yml config --quiet
+
+          docker compose --env-file unraid/.env.example \
+            -f unraid/servarr/compose.yml config --quiet
+
+          docker compose --env-file unraid/.env.example \
+            -f unraid/monitoring/compose.yml config --quiet
+
+          docker compose --env-file nas/.env.example \
+            -f nas/plex/compose.yml config --quiet
+
+          docker compose --env-file nas/.env.example \
+            -f nas/arcane/docker-compose.yml config --quiet
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "HavenStack ${{ github.ref_name }}" \
+            --generate-notes \
+            --verify-tag
