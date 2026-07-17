@@ -1,0 +1,25 @@
+name: Feature or improvement
+description: Propose a change to the stacks, documentation, or tooling.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the gap in the current deployment or documentation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: |
+        Describe the change. For a new service or route, note the intended
+        exposure (public via Tunnel, LAN, or Docker-internal) and its
+        authentication, so it can be reviewed against the exposure matrix.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

@@ -8,6 +8,13 @@
   A modular, security-focused homelab built with Docker Compose across Unraid and NAS infrastructure.
 </p>
 
+<p align="center">
+  <a href="https://github.com/shuntps/HavenStack/actions/workflows/validate-compose.yml"><img src="https://github.com/shuntps/HavenStack/actions/workflows/validate-compose.yml/badge.svg?branch=main" alt="Compose validation status"></a>
+  <a href="https://github.com/shuntps/HavenStack/actions/workflows/validate-docs.yml"><img src="https://github.com/shuntps/HavenStack/actions/workflows/validate-docs.yml/badge.svg?branch=main" alt="Documentation validation status"></a>
+  <a href="https://github.com/shuntps/HavenStack/releases/latest"><img src="https://img.shields.io/github/v/release/shuntps/HavenStack" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/shuntps/HavenStack" alt="License"></a>
+</p>
+
 ## Overview
 
 - Cloudflare Tunnel ingress through Traefik
@@ -97,6 +104,10 @@ Review all paths, user IDs, network ranges, domains, and secrets before deployme
 - Ensure the configured Nextcloud data path exists and is writable before starting the stack.
 
 These files and runtime data are intentionally excluded from Git.
+
+## Contributing
+
+Contributions are welcome. Read the [contributing guide](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md) first. Report vulnerabilities privately as described in the [security policy](SECURITY.md), never in a public issue.
 
 ## License
 
