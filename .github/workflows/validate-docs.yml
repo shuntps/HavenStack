@@ -1,0 +1,85 @@
+name: Validate documentation
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    name: Check internal links and anchors
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Check Markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --offline
+            --include-fragments
+            --no-progress
+            --root-dir ${{ github.workspace }}
+            '**/*.md'
+          fail: true
+
+  image-versions:
+    name: Check pinned image versions in docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Compare documentation image tags with Compose files
+        run: |
+          set -euo pipefail
+
+          status=0
+
+          # Collect every image reference declared by the Compose files.
+          mapfile -t refs < <(grep -rhoE '^[[:space:]]*image:[[:space:]]*[^[:space:]]+' \
+            unraid nas --include=compose.yml \
+            | sed -E 's/^[[:space:]]*image:[[:space:]]*//' \
+            | sort -u)
+
+          if [ "${#refs[@]}" -eq 0 ]; then
+            echo "::error::No image references found in the Compose files."
+            exit 1
+          fi
+
+          for ref in "${refs[@]}"; do
+            name="${ref%:*}"
+            expected="${ref##*:}"
+
+            # Find documentation references to the same image name that pin a
+            # version-like tag or "latest". Container ports such as
+            # "traefik:8080" do not match because they contain no dot.
+            pattern="${name//./\\.}:(latest|v?[0-9]+(\.[0-9]+)+[A-Za-z0-9._-]*)"
+
+            while IFS= read -r match; do
+              [ -z "$match" ] && continue
+              file="${match%%:*}"
+              rest="${match#*:}"
+              line="${rest%%:*}"
+              found="${match##*:}"
+              if [ "$found" != "$expected" ]; then
+                echo "::error file=${file},line=${line}::${file}:${line} references ${name}:${found}, but the Compose files use ${name}:${expected}."
+                status=1
+              fi
+            done < <(grep -rnoE "$pattern" README.md docs || true)
+          done
+
+          if [ "$status" -ne 0 ]; then
+            echo ""
+            echo "Update the documentation so the pinned image versions match the Compose files."
+          fi
+
+          exit "$status"
