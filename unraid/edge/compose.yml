@@ -9,7 +9,7 @@ x-logging: &default-logging
 
 services:
   cloudflared:
-    image: cloudflare/cloudflared:2026.7.0
+    image: cloudflare/cloudflared:2026.7.2
     container_name: cloudflared
     restart: unless-stopped
     mem_limit: 128m
@@ -53,7 +53,7 @@ services:
     logging: *default-logging
 
   traefik:
-    image: traefik:v3.7.6
+    image: traefik:v3.7.8
     container_name: traefik
     restart: unless-stopped
     mem_limit: 256m
