@@ -40,4 +40,4 @@ jobs:
             -f nas/plex/compose.yml config --quiet
 
           docker compose --env-file nas/.env.example \
-            -f nas/arcane/docker-compose.yml config --quiet
+            -f nas/arcane/compose.yml config --quiet

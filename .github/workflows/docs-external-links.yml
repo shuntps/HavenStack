@@ -1,0 +1,35 @@
+name: Check external documentation links
+
+on:
+  schedule:
+    # Mondays 12:00 UTC (08:00 America/Toronto during DST)
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  external-links:
+    name: Check external links
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Check external Markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # Only http(s) links: internal file links and anchors are already
+          # validated on every pull request by the offline job in
+          # validate-docs.yml. 403 and 429 responses are accepted because
+          # some sites block or rate-limit automated clients.
+          args: >-
+            --no-progress
+            --scheme https
+            --scheme http
+            --accept '200..=299,403,429'
+            --max-retries 2
+            '**/*.md'
+          fail: true

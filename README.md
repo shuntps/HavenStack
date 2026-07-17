@@ -33,6 +33,12 @@
 
 ```text
 HavenStack/
+├── docs/
+│   ├── getting-started/
+│   ├── architecture/
+│   ├── stacks/
+│   ├── operations/
+│   └── security/
 ├── unraid/
 │   ├── edge/
 │   ├── apps/
@@ -44,7 +50,19 @@ HavenStack/
     └── arcane/
 ```
 
+## Documentation
+
+For a complete first installation, follow the [HavenStack documentation](docs/README.md). It covers prerequisites, host preparation, environment configuration, Cloudflare Tunnel routing, deployment order, first-run verification, operations, and security boundaries.
+
+Start with the [Quick start](docs/getting-started/quick-start.md) instead of running the deployment commands below immediately.
+
+After deployment, use the [stack guides](docs/stacks/README.md) for service-specific configuration and verification.
+
+Before an update or recovery operation, review the [operations guides](docs/README.md#operations). Use the [exposure matrix](docs/security/exposure-matrix.md) to understand which services are public, LAN-accessible, or internal.
+
 ## Deployment
+
+The commands below are a compact reference for an already prepared environment. For a new installation, use the [step-by-step deployment guide](docs/getting-started/deployment.md).
 
 Create and configure the environment files before starting any stack:
 
@@ -67,7 +85,7 @@ Deploy the required NAS stacks separately:
 
 ```bash
 docker compose --env-file nas/.env -f nas/plex/compose.yml up -d
-docker compose --env-file nas/.env -f nas/arcane/docker-compose.yml up -d
+docker compose --env-file nas/.env -f nas/arcane/compose.yml up -d
 ```
 
 Review all paths, user IDs, network ranges, domains, and secrets before deployment. Never commit populated environment files.
