@@ -38,7 +38,7 @@ In scope:
 Out of scope:
 
 - vulnerabilities in upstream projects (Traefik, Authelia, Nextcloud,
-  Vaultwarden, Plex, and the other imaged services); report those upstream;
+  Vaultwarden, Plex, and the other containerized services); report those upstream;
 - issues that only occur after a user deviates from the documented
   configuration;
 - the security of any individual's private deployment.
