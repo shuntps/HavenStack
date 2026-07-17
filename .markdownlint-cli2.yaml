@@ -1,0 +1,20 @@
+# markdownlint-cli2 configuration for HavenStack.
+# Tolerant of the established documentation style: long lines are allowed
+# (tables and one-sentence-per-line prose), and inline HTML is required for
+# the centered README header and badges.
+config:
+  # MD013: line length. Disabled; the documentation uses long table rows and
+  # full-sentence lines, and lychee already guards the content that matters.
+  MD013: false
+
+  # MD033: inline HTML. The README uses <p align="center"> and <img> for the
+  # banner and badges.
+  MD033: false
+
+globs:
+  - "**/*.md"
+
+ignores:
+  # The pull request template legitimately starts with an HTML comment and a
+  # second-level heading; it is a form, not a documentation page.
+  - ".github/pull_request_template.md"

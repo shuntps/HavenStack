@@ -11,6 +11,19 @@ permissions:
   contents: read
 
 jobs:
+  markdown-style:
+    name: Lint Markdown style
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Run markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v24
+        with:
+          globs: "**/*.md"
+
   links:
     name: Check internal links and anchors
     runs-on: ubuntu-latest

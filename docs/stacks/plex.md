@@ -183,4 +183,3 @@ Use `http://NAS_IP:32400`, not `localhost` and not `plex:32400`. Confirm the NAS
 - [LinuxServer Plex container documentation](https://docs.linuxserver.io/images/docker-plex/)
 - [Plex Media Server setup](https://support.plex.tv/articles/200264746-quick-start-step-by-step-guides/)
 - [Plex support](https://support.plex.tv/)
-

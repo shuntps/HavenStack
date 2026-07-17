@@ -199,4 +199,3 @@ Restore the original `ENCRYPTION_KEY` and `JWT_SECRET` from the protected backup
 - [Arcane installation guide](https://getarcane.app/docs/setup/installation)
 - [Arcane container management](https://getarcane.app/docs/features/containers)
 - [Arcane source repository](https://github.com/getarcaneapp/arcane)
-
