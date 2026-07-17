@@ -50,6 +50,14 @@ docker run --rm -v "$PWD:/input" -w /input lycheeverse/lychee:latest \
   --offline --include-fragments --no-progress --root-dir /input '**/*.md'
 ```
 
+Markdown style (configuration in `.markdownlint-cli2.yaml`; long lines and
+the README's inline HTML are allowed):
+
+```bash
+docker run --rm -v "$PWD:/work" -w /work node:24-alpine \
+  npx --yes markdownlint-cli2@0.23.0
+```
+
 GitHub Actions workflows:
 
 ```bash

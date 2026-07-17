@@ -38,12 +38,12 @@ Cloudflare occasionally changes dashboard labels. In the current dashboard, tunn
 3. Select **Create a tunnel**.
 4. Select **Cloudflared** as the tunnel type.
 
-![Cloudflare tunnel creation page with Cloudflared selected as the recommended tunnel type](../images/tunnel-select-cloudflared.png)
+   ![Cloudflare tunnel creation page with Cloudflared selected as the recommended tunnel type](../images/tunnel-select-cloudflared.png)
 
 5. Give it a descriptive name, such as `havenstack-unraid`.
 6. Select **Save tunnel** and complete the tunnel creation step.
 
-![Cloudflare tunnel naming form using the generic havenstack-unraid name](../images/tunnel-name.png)
+   ![Cloudflare tunnel naming form using the generic havenstack-unraid name](../images/tunnel-name.png)
 
 Cloudflare will show installation commands for several platforms. Do not run the generated command: Docker Compose starts `cloudflared` for this project.
 
