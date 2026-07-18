@@ -7,11 +7,6 @@ x-logging: &default-logging
     max-file: "5"
     compress: "true"
 
-x-media-env: &media-env
-  PUID: ${UID}
-  PGID: ${GID}
-  TZ: ${TZ}
-
 services:
   plex:
     image: linuxserver/plex:1.43.3
@@ -21,7 +16,9 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      <<: *media-env
+      PUID: ${UID}
+      PGID: ${GID}
+      TZ: ${TZ}
       VERSION: docker
       UMASK: "022"
     devices:

@@ -1,83 +1,106 @@
 name: apps
 
 x-logging: &default-logging
-  driver: json-file
-  options:
-    max-size: 50m
-    max-file: "5"
-    compress: "true"
+   driver: json-file
+   options:
+      max-size: 10m
+      max-file: '3'
+      compress: 'true'
 
 services:
-  homepage:
-    image: shuntps/homepage:1.1.0
-    container_name: homepage
-    restart: unless-stopped
-    mem_limit: 256m
-    read_only: true
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      TZ: ${TZ}
-      PORT: 3000
-      SITE_DOMAIN: ${DOMAIN}
-      SITE_DESCRIPTION: ${SITE_DESCRIPTION}
-      SITE_KEYWORDS: ${SITE_KEYWORDS}
-      SITE_AUTHOR: ${DOMAIN_SLD}
-      SITE_LOCALE: ${SITE_LOCALE}
-      SECURITY_TXT_EXPIRES: ${SECURITY_TXT_EXPIRES}
-      SECURITY_TXT_CONTACT: ${SECURITY_TXT_CONTACT}
-    tmpfs:
-      - /tmp
-      - /app/.next/cache
-    networks:
-      homepage_backend: {}
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    logging: *default-logging
+   homepage:
+      image: shuntps/homepage:1.1.0
+      container_name: homepage
+      restart: unless-stopped
+      mem_limit: 256m
+      read_only: true
+      cap_drop:
+         - ALL
+      security_opt:
+         - no-new-privileges:true
+      environment:
+         TZ: ${TZ}
+         PORT: 3000
+         SITE_DOMAIN: ${DOMAIN}
+         SITE_DESCRIPTION: ${SITE_DESCRIPTION}
+         SITE_KEYWORDS: ${SITE_KEYWORDS}
+         SITE_AUTHOR: ${DOMAIN_SLD}
+         SITE_LOCALE: ${SITE_LOCALE}
+         SECURITY_TXT_EXPIRES: ${SECURITY_TXT_EXPIRES}
+         SECURITY_TXT_CONTACT: ${SECURITY_TXT_CONTACT}
+      tmpfs:
+         - /tmp
+         - /app/.next/cache
+      networks:
+         homepage_backend: {}
+      healthcheck:
+         test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:3000/api/health']
+         interval: 1m
+         timeout: 10s
+         retries: 3
+         start_period: 30s
+      logging: *default-logging
 
-  vaultwarden:
-    image: vaultwarden/server:1.36.0
-    container_name: vaultwarden
-    restart: unless-stopped
-    mem_limit: 256m
-    user: ${UID}:${GID}
-    read_only: true
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      TZ: ${TZ}
-      DOMAIN: https://vault.${DOMAIN}
-      ROCKET_ADDRESS: 0.0.0.0
-      ROCKET_PORT: 8080
-      SIGNUPS_ALLOWED: "false"
-      INVITATIONS_ALLOWED: "false"
-      ADMIN_TOKEN: ${VAULTWARDEN_ADMIN_TOKEN}
-    volumes:
-      - ${APPDATA_PATH}/vaultwarden:/data
-    tmpfs:
-      - /tmp
-    networks:
-      apps_backend: {}
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/alive"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    logging: *default-logging
+   vaultwarden:
+      image: vaultwarden/server:1.36.0
+      container_name: vaultwarden
+      restart: unless-stopped
+      mem_limit: 256m
+      user: ${UID}:${GID}
+      read_only: true
+      cap_drop:
+         - ALL
+      security_opt:
+         - no-new-privileges:true
+      environment:
+         TZ: ${TZ}
+         DOMAIN: https://vault.${DOMAIN}
+         ROCKET_ADDRESS: 0.0.0.0
+         ROCKET_PORT: 8080
+         SIGNUPS_ALLOWED: 'false'
+         INVITATIONS_ALLOWED: 'false'
+         ADMIN_TOKEN: ${VAULTWARDEN_ADMIN_TOKEN}
+      volumes:
+         - ${APPDATA_PATH}/vaultwarden:/data
+      tmpfs:
+         - /tmp
+      networks:
+         apps_backend: {}
+      healthcheck:
+         test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:8080/alive']
+         interval: 1m
+         timeout: 10s
+         retries: 3
+         start_period: 30s
+      logging: *default-logging
+
+   jenkins:
+      image: jenkins/jenkins:2.568.1-jdk21
+      container_name: jenkins-controller
+      restart: unless-stopped
+      mem_limit: 2g
+      user: ${UID}:${GID}
+      security_opt:
+         - no-new-privileges:true
+      stop_grace_period: 60s
+      environment:
+         TZ: ${TZ}
+      ports:
+         - '8080:8080'
+      volumes:
+         - ${APPDATA_PATH}/jenkins:/var/jenkins_home
+      healthcheck:
+         test: ['CMD', 'curl', '--fail', '--silent', 'http://127.0.0.1:8080/login']
+         interval: 30s
+         timeout: 10s
+         retries: 5
+         start_period: 90s
+      logging: *default-logging
 
 networks:
-  apps_backend:
-    external: true
-    name: apps_backend
-  homepage_backend:
-    external: true
-    name: homepage_backend
+   apps_backend:
+      external: true
+      name: apps_backend
+   homepage_backend:
+      external: true
+      name: homepage_backend

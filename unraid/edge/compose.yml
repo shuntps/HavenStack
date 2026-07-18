@@ -1,170 +1,169 @@
 name: edge
 
 x-logging: &default-logging
-  driver: json-file
-  options:
-    max-size: 50m
-    max-file: "5"
-    compress: "true"
+   driver: json-file
+   options:
+      max-size: 10m
+      max-file: '3'
+      compress: 'true'
 
 services:
-  cloudflared:
-    image: cloudflare/cloudflared:2026.7.2
-    container_name: cloudflared
-    restart: unless-stopped
-    mem_limit: 128m
-    read_only: true
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 run
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARED_TUNNEL_TOKEN}
-    networks:
-      edge_ingress: {}
-      monitoring_backend: {}
-    healthcheck:
-      test:
-        ["CMD", "cloudflared", "tunnel", "--metrics", "127.0.0.1:2000", "ready"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    logging: *default-logging
+   cloudflared:
+      image: cloudflare/cloudflared:2026.7.2
+      container_name: cloudflared
+      restart: unless-stopped
+      mem_limit: 128m
+      read_only: true
+      cap_drop:
+         - ALL
+      security_opt:
+         - no-new-privileges:true
+      command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 run
+      environment:
+         TUNNEL_TOKEN: ${CLOUDFLARED_TUNNEL_TOKEN}
+      networks:
+         edge_ingress: {}
+         monitoring_backend: {}
+      healthcheck:
+         test: ['CMD', 'cloudflared', 'tunnel', '--metrics', '127.0.0.1:2000', 'ready']
+         interval: 1m
+         timeout: 10s
+         retries: 3
+         start_period: 30s
+      logging: *default-logging
 
-  cloudflare-ddns:
-    image: favonia/cloudflare-ddns:1.16.2
-    container_name: cloudflare-ddns
-    restart: unless-stopped
-    mem_limit: 64m
-    read_only: true
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      TZ: ${TZ}
-      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_DDNS_API_TOKEN}
-      DOMAINS: ${CLOUDFLARE_DDNS_DOMAINS}
-      IP6_PROVIDER: none
-    networks:
-      ddns_egress: {}
-    logging: *default-logging
+   cloudflare-ddns:
+      image: favonia/cloudflare-ddns:1.16.2
+      container_name: cloudflare-ddns
+      restart: unless-stopped
+      mem_limit: 64m
+      read_only: true
+      cap_drop:
+         - ALL
+      security_opt:
+         - no-new-privileges:true
+      environment:
+         TZ: ${TZ}
+         CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_DDNS_API_TOKEN}
+         DOMAINS: ${CLOUDFLARE_DDNS_DOMAINS}
+         IP6_PROVIDER: none
+      networks:
+         ddns_egress: {}
+      logging: *default-logging
 
-  traefik:
-    image: traefik:v3.7.8
-    container_name: traefik
-    restart: unless-stopped
-    mem_limit: 256m
-    user: ${UID}:${GID}
-    read_only: true
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      TZ: ${TZ}
-      DOMAIN: ${DOMAIN}
-      UNRAID_IP: ${UNRAID_IP}
-      NAS_IP: ${NAS_IP}
-    volumes:
-      - ./config/traefik:/etc/traefik:ro
-    tmpfs:
-      - /tmp
-    networks:
-      edge_ingress: {}
-      auth_backend: {}
-      apps_backend: {}
-      servarr_backend: {}
-      homepage_backend: {}
-      monitoring_backend: {}
-    healthcheck:
-      test: ["CMD", "traefik", "healthcheck", "--ping"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    logging: *default-logging
+   traefik:
+      image: traefik:v3.7.8
+      container_name: traefik
+      restart: unless-stopped
+      mem_limit: 256m
+      user: ${UID}:${GID}
+      read_only: true
+      cap_drop:
+         - ALL
+      security_opt:
+         - no-new-privileges:true
+      environment:
+         TZ: ${TZ}
+         DOMAIN: ${DOMAIN}
+         UNRAID_IP: ${UNRAID_IP}
+         NAS_IP: ${NAS_IP}
+      volumes:
+         - ./config/traefik:/etc/traefik:ro
+      tmpfs:
+         - /tmp
+      networks:
+         edge_ingress: {}
+         auth_backend: {}
+         apps_backend: {}
+         servarr_backend: {}
+         homepage_backend: {}
+         monitoring_backend: {}
+      healthcheck:
+         test: ['CMD', 'traefik', 'healthcheck', '--ping']
+         interval: 1m
+         timeout: 10s
+         retries: 3
+         start_period: 30s
+      logging: *default-logging
 
-  authelia:
-    image: authelia/authelia:4.39.20
-    container_name: authelia
-    restart: unless-stopped
-    mem_limit: 256m
-    user: ${UID}:${GID}
-    read_only: true
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    command: authelia --config /config/configuration.yml --config.experimental.filters template
-    environment:
-      TZ: ${TZ}
-      DOMAIN: ${DOMAIN}
-      DOMAIN_SLD: ${DOMAIN_SLD}
-      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
-      AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET}
-      AUTH_STORAGE_ENCRYPTION_KEY: ${AUTH_STORAGE_ENCRYPTION_KEY}
-    volumes:
-      - ./config/authelia:/config
-      - ${APPDATA_PATH}/authelia:/data
-    tmpfs:
-      - /tmp
-    networks:
-      auth_backend: {}
-      monitoring_backend: {}
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9091/api/health || exit 1"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    logging: *default-logging
+   authelia:
+      image: authelia/authelia:4.39.20
+      container_name: authelia
+      restart: unless-stopped
+      mem_limit: 256m
+      user: ${UID}:${GID}
+      read_only: true
+      cap_drop:
+         - ALL
+      security_opt:
+         - no-new-privileges:true
+      command: authelia --config /config/configuration.yml --config.experimental.filters template
+      environment:
+         TZ: ${TZ}
+         DOMAIN: ${DOMAIN}
+         DOMAIN_SLD: ${DOMAIN_SLD}
+         AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+         AUTH_SESSION_SECRET: ${AUTH_SESSION_SECRET}
+         AUTH_STORAGE_ENCRYPTION_KEY: ${AUTH_STORAGE_ENCRYPTION_KEY}
+      volumes:
+         - ./config/authelia:/config
+         - ${APPDATA_PATH}/authelia:/data
+      tmpfs:
+         - /tmp
+      networks:
+         auth_backend: {}
+         monitoring_backend: {}
+      healthcheck:
+         test: ['CMD-SHELL', 'wget -q --spider http://127.0.0.1:9091/api/health || exit 1']
+         interval: 1m
+         timeout: 10s
+         retries: 3
+         start_period: 30s
+      logging: *default-logging
 
 networks:
-  edge_ingress:
-    driver: bridge
-    name: edge_ingress
-    ipam:
-      config:
-        - subnet: 10.88.10.0/24
-  auth_backend:
-    driver: bridge
-    name: auth_backend
-    internal: true
-    ipam:
-      config:
-        - subnet: 10.88.20.0/24
-  apps_backend:
-    driver: bridge
-    name: apps_backend
-    ipam:
-      config:
-        - subnet: 10.88.30.0/24
-  servarr_backend:
-    driver: bridge
-    name: servarr_backend
-    ipam:
-      config:
-        - subnet: 10.88.40.0/24
-  homepage_backend:
-    driver: bridge
-    name: homepage_backend
-    internal: true
-    ipam:
-      config:
-        - subnet: 10.88.50.0/24
-  monitoring_backend:
-    driver: bridge
-    name: monitoring_backend
-    internal: true
-    ipam:
-      config:
-        - subnet: 10.88.60.0/24
-  ddns_egress:
-    driver: bridge
-    name: ddns_egress
-    ipam:
-      config:
-        - subnet: 10.88.70.0/24
+   edge_ingress:
+      driver: bridge
+      name: edge_ingress
+      ipam:
+         config:
+            - subnet: 10.88.10.0/24
+   auth_backend:
+      driver: bridge
+      name: auth_backend
+      internal: true
+      ipam:
+         config:
+            - subnet: 10.88.20.0/24
+   apps_backend:
+      driver: bridge
+      name: apps_backend
+      ipam:
+         config:
+            - subnet: 10.88.30.0/24
+   servarr_backend:
+      driver: bridge
+      name: servarr_backend
+      ipam:
+         config:
+            - subnet: 10.88.40.0/24
+   homepage_backend:
+      driver: bridge
+      name: homepage_backend
+      internal: true
+      ipam:
+         config:
+            - subnet: 10.88.50.0/24
+   monitoring_backend:
+      driver: bridge
+      name: monitoring_backend
+      internal: true
+      ipam:
+         config:
+            - subnet: 10.88.60.0/24
+   ddns_egress:
+      driver: bridge
+      name: ddns_egress
+      ipam:
+         config:
+            - subnet: 10.88.70.0/24

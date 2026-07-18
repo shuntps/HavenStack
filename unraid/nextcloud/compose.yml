@@ -1,239 +1,239 @@
 name: nextcloud
 
 x-logging: &default-logging
-  driver: json-file
-  options:
-    max-size: 50m
-    max-file: "5"
-    compress: "true"
+   driver: json-file
+   options:
+      max-size: 10m
+      max-file: '3'
+      compress: 'true'
 
 services:
-  nextcloud-aio-apache:
-    image: ghcr.io/nextcloud-releases/aio-apache:latest
-    container_name: nextcloud-aio-apache
-    init: true
-    restart: unless-stopped
-    mem_limit: 512m
-    user: "33"
-    read_only: true
-    cap_drop:
-      - NET_RAW
-    security_opt:
-      - no-new-privileges:true
-    depends_on:
-      nextcloud-aio-nextcloud:
-        condition: service_healthy
-      nextcloud-aio-notify-push:
-        condition: service_healthy
-    environment:
-      NC_DOMAIN: cloud.${DOMAIN}
-      NEXTCLOUD_HOST: nextcloud-aio-nextcloud
-      APACHE_HOST: nextcloud-aio-apache
-      APACHE_PORT: "11000"
-      APACHE_MAX_SIZE: ${NEXTCLOUD_UPLOAD_LIMIT}
-      APACHE_MAX_TIME: ${NEXTCLOUD_MAX_TIME}
-      NOTIFY_PUSH_HOST: nextcloud-aio-notify-push
-      AIO_LOG_LEVEL: ${NEXTCLOUD_LOG_LEVEL}
-      TZ: ${TZ}
-    volumes:
-      - nextcloud_aio_nextcloud:/var/www/html:ro
-      - nextcloud_aio_apache:/mnt/data
-    tmpfs:
-      - /var/log/supervisord
-      - /var/run/supervisord
-      - /usr/local/apache2/logs
-      - /tmp
-      - /home/www-data
-    networks:
-      apps_backend: {}
-      nextcloud_backend: {}
-    healthcheck:
-      test: ["CMD", "/healthcheck.sh"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
-      start_period: 0s
-    logging: *default-logging
+   nextcloud-aio-apache:
+      image: ghcr.io/nextcloud-releases/aio-apache:latest
+      container_name: nextcloud-aio-apache
+      init: true
+      restart: unless-stopped
+      mem_limit: 512m
+      user: '33'
+      read_only: true
+      cap_drop:
+         - NET_RAW
+      security_opt:
+         - no-new-privileges:true
+      depends_on:
+         nextcloud-aio-nextcloud:
+            condition: service_healthy
+         nextcloud-aio-notify-push:
+            condition: service_healthy
+      environment:
+         NC_DOMAIN: cloud.${DOMAIN}
+         NEXTCLOUD_HOST: nextcloud-aio-nextcloud
+         APACHE_HOST: nextcloud-aio-apache
+         APACHE_PORT: '11000'
+         APACHE_MAX_SIZE: ${NEXTCLOUD_UPLOAD_LIMIT}
+         APACHE_MAX_TIME: ${NEXTCLOUD_MAX_TIME}
+         NOTIFY_PUSH_HOST: nextcloud-aio-notify-push
+         AIO_LOG_LEVEL: ${NEXTCLOUD_LOG_LEVEL}
+         TZ: ${TZ}
+      volumes:
+         - nextcloud_aio_nextcloud:/var/www/html:ro
+         - nextcloud_aio_apache:/mnt/data
+      tmpfs:
+         - /var/log/supervisord
+         - /var/run/supervisord
+         - /usr/local/apache2/logs
+         - /tmp
+         - /home/www-data
+      networks:
+         apps_backend: {}
+         nextcloud_backend: {}
+      healthcheck:
+         test: ['CMD', '/healthcheck.sh']
+         interval: 30s
+         timeout: 30s
+         retries: 3
+         start_period: 0s
+      logging: *default-logging
 
-  nextcloud-aio-database:
-    image: ghcr.io/nextcloud-releases/aio-postgresql:latest
-    container_name: nextcloud-aio-database
-    init: true
-    restart: unless-stopped
-    mem_limit: 1g
-    user: "999"
-    read_only: true
-    cap_drop:
-      - NET_RAW
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      POSTGRES_PASSWORD: ${NEXTCLOUD_DATABASE_PASSWORD}
-      POSTGRES_DB: nextcloud_database
-      POSTGRES_USER: nextcloud
-      AIO_LOG_LEVEL: ${NEXTCLOUD_LOG_LEVEL}
-      TZ: ${TZ}
-      PGTZ: ${TZ}
-    volumes:
-      - nextcloud_aio_database:/var/lib/postgresql/data
-      - nextcloud_aio_database_dump:/mnt/data
-    tmpfs:
-      - /var/run/postgresql
-    networks:
-      nextcloud_backend: {}
-    stop_grace_period: 30m
-    shm_size: 256m
-    healthcheck:
-      test: ["CMD", "/healthcheck.sh"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
-      start_period: 0s
-    logging: *default-logging
+   nextcloud-aio-database:
+      image: ghcr.io/nextcloud-releases/aio-postgresql:latest
+      container_name: nextcloud-aio-database
+      init: true
+      restart: unless-stopped
+      mem_limit: 1g
+      user: '999'
+      read_only: true
+      cap_drop:
+         - NET_RAW
+      security_opt:
+         - no-new-privileges:true
+      environment:
+         POSTGRES_PASSWORD: ${NEXTCLOUD_DATABASE_PASSWORD}
+         POSTGRES_DB: nextcloud_database
+         POSTGRES_USER: nextcloud
+         AIO_LOG_LEVEL: ${NEXTCLOUD_LOG_LEVEL}
+         TZ: ${TZ}
+         PGTZ: ${TZ}
+      volumes:
+         - nextcloud_aio_database:/var/lib/postgresql/data
+         - nextcloud_aio_database_dump:/mnt/data
+      tmpfs:
+         - /var/run/postgresql
+      networks:
+         nextcloud_backend: {}
+      stop_grace_period: 30m
+      shm_size: 256m
+      healthcheck:
+         test: ['CMD', '/healthcheck.sh']
+         interval: 30s
+         timeout: 30s
+         retries: 3
+         start_period: 0s
+      logging: *default-logging
 
-  nextcloud-aio-redis:
-    image: ghcr.io/nextcloud-releases/aio-redis:latest
-    container_name: nextcloud-aio-redis
-    init: true
-    restart: unless-stopped
-    mem_limit: 256m
-    user: "999"
-    read_only: true
-    cap_drop:
-      - NET_RAW
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      REDIS_HOST_PASSWORD: ${NEXTCLOUD_REDIS_PASSWORD}
-      AIO_LOG_LEVEL: ${NEXTCLOUD_LOG_LEVEL}
-      TZ: ${TZ}
-    volumes:
-      - nextcloud_aio_redis:/data
-    networks:
-      nextcloud_backend: {}
-    healthcheck:
-      test: ["CMD", "/healthcheck.sh"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
-      start_period: 0s
-    logging: *default-logging
+   nextcloud-aio-redis:
+      image: ghcr.io/nextcloud-releases/aio-redis:latest
+      container_name: nextcloud-aio-redis
+      init: true
+      restart: unless-stopped
+      mem_limit: 256m
+      user: '999'
+      read_only: true
+      cap_drop:
+         - NET_RAW
+      security_opt:
+         - no-new-privileges:true
+      environment:
+         REDIS_HOST_PASSWORD: ${NEXTCLOUD_REDIS_PASSWORD}
+         AIO_LOG_LEVEL: ${NEXTCLOUD_LOG_LEVEL}
+         TZ: ${TZ}
+      volumes:
+         - nextcloud_aio_redis:/data
+      networks:
+         nextcloud_backend: {}
+      healthcheck:
+         test: ['CMD', '/healthcheck.sh']
+         interval: 30s
+         timeout: 30s
+         retries: 3
+         start_period: 0s
+      logging: *default-logging
 
-  nextcloud-aio-nextcloud:
-    image: ghcr.io/nextcloud-releases/aio-nextcloud:latest
-    container_name: nextcloud-aio-nextcloud
-    init: true
-    restart: unless-stopped
-    mem_limit: 2g
-    cap_drop:
-      - NET_RAW
-    security_opt:
-      - no-new-privileges:true
-    depends_on:
-      nextcloud-aio-database:
-        condition: service_healthy
-      nextcloud-aio-redis:
-        condition: service_healthy
-    environment:
-      NEXTCLOUD_HOST: nextcloud-aio-nextcloud
-      POSTGRES_HOST: nextcloud-aio-database
-      POSTGRES_PORT: "5432"
-      POSTGRES_PASSWORD: ${NEXTCLOUD_DATABASE_PASSWORD}
-      POSTGRES_DB: nextcloud_database
-      POSTGRES_USER: nextcloud
-      REDIS_HOST: nextcloud-aio-redis
-      REDIS_PORT: "6379"
-      REDIS_HOST_PASSWORD: ${NEXTCLOUD_REDIS_PASSWORD}
-      APACHE_HOST: nextcloud-aio-apache
-      APACHE_PORT: "11000"
-      NC_DOMAIN: cloud.${DOMAIN}
-      ADMIN_USER: ${NEXTCLOUD_ADMIN_USER}
-      ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
-      NEXTCLOUD_DATA_DIR: /mnt/ncdata
-      OVERWRITEHOST: cloud.${DOMAIN}
-      OVERWRITEPROTOCOL: https
-      AIO_LOG_LEVEL: ${NEXTCLOUD_LOG_LEVEL}
-      UPDATE_NEXTCLOUD_APPS: "yes"
-      TZ: ${TZ}
-      PHP_UPLOAD_LIMIT: ${NEXTCLOUD_UPLOAD_LIMIT}
-      PHP_MEMORY_LIMIT: ${NEXTCLOUD_MEMORY_LIMIT}
-      PHP_MAX_TIME: ${NEXTCLOUD_MAX_TIME}
-      STARTUP_APPS: notify_push
-      CLAMAV_ENABLED: "no"
-      COLLABORA_ENABLED: "no"
-      FULLTEXTSEARCH_ENABLED: "no"
-      IMAGINARY_ENABLED: "no"
-      ONLYOFFICE_ENABLED: "no"
-      TALK_ENABLED: "no"
-      TALK_RECORDING_ENABLED: "no"
-      WHITEBOARD_ENABLED: "no"
-    volumes:
-      - nextcloud_aio_nextcloud:/var/www/html
-      - ${CLOUD_PATH}:/mnt/ncdata:rslave
-    networks:
-      nextcloud_backend: {}
-      nextcloud_egress: {}
-    stop_grace_period: 10m
-    shm_size: 128m
-    healthcheck:
-      test: ["CMD", "/healthcheck.sh"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
-      start_period: 0s
-    logging: *default-logging
+   nextcloud-aio-nextcloud:
+      image: ghcr.io/nextcloud-releases/aio-nextcloud:latest
+      container_name: nextcloud-aio-nextcloud
+      init: true
+      restart: unless-stopped
+      mem_limit: 2g
+      cap_drop:
+         - NET_RAW
+      security_opt:
+         - no-new-privileges:true
+      depends_on:
+         nextcloud-aio-database:
+            condition: service_healthy
+         nextcloud-aio-redis:
+            condition: service_healthy
+      environment:
+         NEXTCLOUD_HOST: nextcloud-aio-nextcloud
+         POSTGRES_HOST: nextcloud-aio-database
+         POSTGRES_PORT: '5432'
+         POSTGRES_PASSWORD: ${NEXTCLOUD_DATABASE_PASSWORD}
+         POSTGRES_DB: nextcloud_database
+         POSTGRES_USER: nextcloud
+         REDIS_HOST: nextcloud-aio-redis
+         REDIS_PORT: '6379'
+         REDIS_HOST_PASSWORD: ${NEXTCLOUD_REDIS_PASSWORD}
+         APACHE_HOST: nextcloud-aio-apache
+         APACHE_PORT: '11000'
+         NC_DOMAIN: cloud.${DOMAIN}
+         ADMIN_USER: ${NEXTCLOUD_ADMIN_USER}
+         ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD}
+         NEXTCLOUD_DATA_DIR: /mnt/ncdata
+         OVERWRITEHOST: cloud.${DOMAIN}
+         OVERWRITEPROTOCOL: https
+         AIO_LOG_LEVEL: ${NEXTCLOUD_LOG_LEVEL}
+         UPDATE_NEXTCLOUD_APPS: 'yes'
+         TZ: ${TZ}
+         PHP_UPLOAD_LIMIT: ${NEXTCLOUD_UPLOAD_LIMIT}
+         PHP_MEMORY_LIMIT: ${NEXTCLOUD_MEMORY_LIMIT}
+         PHP_MAX_TIME: ${NEXTCLOUD_MAX_TIME}
+         STARTUP_APPS: notify_push
+         CLAMAV_ENABLED: 'no'
+         COLLABORA_ENABLED: 'no'
+         FULLTEXTSEARCH_ENABLED: 'no'
+         IMAGINARY_ENABLED: 'no'
+         ONLYOFFICE_ENABLED: 'no'
+         TALK_ENABLED: 'no'
+         TALK_RECORDING_ENABLED: 'no'
+         WHITEBOARD_ENABLED: 'no'
+      volumes:
+         - nextcloud_aio_nextcloud:/var/www/html
+         - ${CLOUD_PATH}:/mnt/ncdata:rslave
+      networks:
+         nextcloud_backend: {}
+         nextcloud_egress: {}
+      stop_grace_period: 10m
+      shm_size: 128m
+      healthcheck:
+         test: ['CMD', '/healthcheck.sh']
+         interval: 30s
+         timeout: 30s
+         retries: 3
+         start_period: 0s
+      logging: *default-logging
 
-  nextcloud-aio-notify-push:
-    image: ghcr.io/nextcloud-releases/aio-notify-push:latest
-    container_name: nextcloud-aio-notify-push
-    init: true
-    restart: unless-stopped
-    mem_limit: 128m
-    user: "33"
-    read_only: true
-    cap_drop:
-      - NET_RAW
-    security_opt:
-      - no-new-privileges:true
-    depends_on:
-      nextcloud-aio-nextcloud:
-        condition: service_healthy
-    environment:
-      NEXTCLOUD_HOST: nextcloud-aio-nextcloud
-      AIO_LOG_LEVEL: ${NEXTCLOUD_LOG_LEVEL}
-      TZ: ${TZ}
-    volumes:
-      - nextcloud_aio_nextcloud:/var/www/html:ro
-    networks:
-      nextcloud_backend: {}
-    healthcheck:
-      test: ["CMD", "/healthcheck.sh"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
-      start_period: 0s
-    logging: *default-logging
+   nextcloud-aio-notify-push:
+      image: ghcr.io/nextcloud-releases/aio-notify-push:latest
+      container_name: nextcloud-aio-notify-push
+      init: true
+      restart: unless-stopped
+      mem_limit: 128m
+      user: '33'
+      read_only: true
+      cap_drop:
+         - NET_RAW
+      security_opt:
+         - no-new-privileges:true
+      depends_on:
+         nextcloud-aio-nextcloud:
+            condition: service_healthy
+      environment:
+         NEXTCLOUD_HOST: nextcloud-aio-nextcloud
+         AIO_LOG_LEVEL: ${NEXTCLOUD_LOG_LEVEL}
+         TZ: ${TZ}
+      volumes:
+         - nextcloud_aio_nextcloud:/var/www/html:ro
+      networks:
+         nextcloud_backend: {}
+      healthcheck:
+         test: ['CMD', '/healthcheck.sh']
+         interval: 30s
+         timeout: 30s
+         retries: 3
+         start_period: 0s
+      logging: *default-logging
 
 volumes:
-  nextcloud_aio_apache:
-    name: nextcloud_aio_apache
-  nextcloud_aio_database:
-    name: nextcloud_aio_database
-  nextcloud_aio_database_dump:
-    name: nextcloud_aio_database_dump
-  nextcloud_aio_nextcloud:
-    name: nextcloud_aio_nextcloud
-  nextcloud_aio_redis:
-    name: nextcloud_aio_redis
+   nextcloud_aio_apache:
+      name: nextcloud_aio_apache
+   nextcloud_aio_database:
+      name: nextcloud_aio_database
+   nextcloud_aio_database_dump:
+      name: nextcloud_aio_database_dump
+   nextcloud_aio_nextcloud:
+      name: nextcloud_aio_nextcloud
+   nextcloud_aio_redis:
+      name: nextcloud_aio_redis
 
 networks:
-  apps_backend:
-    external: true
-    name: apps_backend
-  nextcloud_backend:
-    driver: bridge
-    internal: true
-    name: nextcloud_backend
-  nextcloud_egress:
-    driver: bridge
-    name: nextcloud_egress
+   apps_backend:
+      external: true
+      name: apps_backend
+   nextcloud_backend:
+      driver: bridge
+      internal: true
+      name: nextcloud_backend
+   nextcloud_egress:
+      driver: bridge
+      name: nextcloud_egress
