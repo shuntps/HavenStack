@@ -188,7 +188,6 @@ These normally do not need backup:
 - downloaded container images, provided their exact versions remain available;
 - `/etc/localtime`;
 - `/dev/dri`;
-- `/var/run/docker.sock`;
 - generated container log files unless they are required for a separate audit policy.
 
 Images using `latest` make exact recreation less deterministic. Record the deployed Git commit and image identifiers before upgrades, and back up state before pulling a newer image.

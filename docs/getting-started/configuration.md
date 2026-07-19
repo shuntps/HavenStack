@@ -119,7 +119,6 @@ Use [`nas/.env.example`](../../nas/.env.example) as the authoritative list.
 | Variable | Required value |
 | --- | --- |
 | `TZ` | Same IANA timezone used on Unraid |
-| `NAS_IP` | Stable NAS LAN address; it must match `NAS_IP` in `unraid/.env` |
 | `UID`, `GID` | Numeric identity that owns Plex and media files on the NAS |
 | `DATA_PATH` | Persistent application-data root; the Plex stack uses `plex` below it |
 | `MEDIA_PATH` | Root of the Plex media library |

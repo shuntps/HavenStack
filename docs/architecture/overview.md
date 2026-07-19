@@ -123,7 +123,7 @@ Use this startup order:
 4. `unraid/servarr`;
 5. `unraid/monitoring`.
 
-The NAS stacks are deployed separately on the NAS because Docker networks do not span the two hosts. Communication between Unraid and the NAS uses LAN addresses and mounted storage rather than shared Docker networks.
+The NAS stack is deployed separately on the NAS because Docker networks do not span the two hosts. Communication between Unraid and the NAS uses LAN addresses and mounted storage rather than shared Docker networks.
 
 ## Authentication boundaries
 

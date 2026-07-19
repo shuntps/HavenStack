@@ -23,7 +23,7 @@ There is no universal hardware minimum because media size, Nextcloud usage, and 
 
 | Host | Sum of configured container memory limits | Notes |
 | --- | ---: | --- |
-| Unraid | 11,136 MiB (10.875 GiB) | Includes every Unraid stack |
+| Unraid | 11,072 MiB (10.8125 GiB) | Includes every Unraid stack |
 | NAS | 1,024 MiB (1 GiB) | Plex |
 
 These values are upper limits, not reserved memory and not a guarantee that the applications will perform well with less. Leave additional memory for the host operating system, Docker, filesystem cache, and workload spikes. The repository does not define CPU limits.
