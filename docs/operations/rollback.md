@@ -25,7 +25,7 @@ A prepared rollback needs:
 - the matching `.env`, encryption keys, user database, VPN material, and storage paths;
 - enough maintenance time to validate the restored system.
 
-GitHub release tags record repository content, not the bytes behind mutable container tags. Nextcloud and Arcane currently use `latest`, so a Git tag alone cannot recreate their former images. Do not prune old images until the rollback window has closed.
+GitHub release tags record repository content, not the bytes behind mutable container tags. Nextcloud currently uses `latest`, so a Git tag alone cannot recreate its former images. Do not prune old images until the rollback window has closed.
 
 ## Stop and preserve evidence
 
@@ -131,16 +131,16 @@ Restore all application configuration that must agree on paths, credentials, and
 
 Historical Prometheus data is independent of application data. A monitoring rollback can discard history if that is acceptable, but Grafana users and UI-created state require `${APPDATA_PATH}/grafana`. Provisioned dashboards can be recreated from Git.
 
-### Plex and Arcane
+### Plex
 
-Plex database compatibility must follow Plex's supported downgrade or restore guidance. Arcane uses `latest`, so restore the recorded image with `${DATA_PATH}/arcane` and the matching `ENCRYPTION_KEY` and `JWT_SECRET`.
+Plex database compatibility must follow Plex's supported downgrade or restore guidance.
 
 ## Safe start order after rollback
 
 For a full environment restore:
 
 1. start the NAS and verify storage exports;
-2. start or verify Plex and Arcane on the NAS as required by the maintenance plan;
+2. start or verify Plex on the NAS as required by the maintenance plan;
 3. verify `${HOMELAB_PATH}` and `${CLOUD_PATH}` on Unraid;
 4. start edge;
 5. start apps;

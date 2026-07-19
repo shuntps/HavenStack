@@ -20,25 +20,15 @@ The home router does not need inbound forwarding for ports `80` or `443`. `cloud
 
 Cloudflare terminates the visitor's TLS connection. The Cloudflare-to-cloudflared Tunnel is encrypted; only the short `cloudflared` to Traefik hop uses HTTP inside `edge_ingress`.
 
-## Tunnel DNS and DDNS
+## Tunnel DNS
 
-The two mechanisms have different purposes:
-
-| Name | Owner | Destination | Purpose |
-| --- | --- | --- | --- |
-| `example.com` | Cloudflare Tunnel route | `http://traefik:8080` | Homepage at the apex domain |
-| `*.example.com` | Cloudflare Tunnel route | `http://traefik:8080` | First-level HavenStack subdomains |
-| `ddns.example.com` | cloudflare-ddns | Current home public IPv4 address | Separate direct-DNS use outside the Tunnel request path |
-
-The wildcard does not match the apex, so both Tunnel routes are required. A final `http_status:404` Tunnel rule rejects unmatched published routes.
-
-`CLOUDFLARE_DDNS_DOMAINS` is intentionally set to `ddns.example.com`. Do not change it to the apex or wildcard names. The DDNS container sets `IP6_PROVIDER=none`, so it updates IPv4 only. The DDNS record may reveal the home public IP and must not be treated as protected by the Tunnel or Authelia.
+Cloudflare routes `example.com` and `*.example.com` to `http://traefik:8080`. The wildcard does not match the apex, so both Tunnel routes are required. A final `http_status:404` Tunnel rule rejects unmatched published routes.
 
 See [Configure the Cloudflare Tunnel](../getting-started/cloudflare-tunnel.md) for the dashboard procedure.
 
 ## Unraid Docker networks
 
-The edge stack creates seven networks with fixed subnets. Other stacks declare several of them as external, which is why `unraid/edge/compose.yml` must start first.
+The edge stack creates six networks with fixed subnets. Other stacks declare several of them as external, which is why `unraid/edge/compose.yml` must start first.
 
 | Network | Subnet | Internal | Members in the repository | Purpose |
 | --- | --- | --- | --- | --- |
@@ -48,7 +38,6 @@ The edge stack creates seven networks with fixed subnets. Other stacks declare s
 | `servarr_backend` | `10.88.40.0/24` | No | Traefik, all Servarr services, Blackbox Exporter | Media automation proxying and probes |
 | `homepage_backend` | `10.88.50.0/24` | Yes | Traefik, Homepage, Blackbox Exporter | Homepage proxying and probes |
 | `monitoring_backend` | `10.88.60.0/24` | Yes | cloudflared, Traefik, Authelia, Prometheus, Blackbox Exporter, Grafana | Metrics and monitoring communication |
-| `ddns_egress` | `10.88.70.0/24` | No | cloudflare-ddns | Outbound DNS update traffic |
 
 An internal Docker network does not provide normal external connectivity. A container can still communicate with other members of that network and may also have another non-internal network.
 
@@ -78,11 +67,10 @@ Nextcloud Apache also joins `apps_backend`, allowing Traefik and Blackbox Export
 The NAS runs a separate Docker Engine:
 
 - Plex uses `network_mode: host`. It shares the NAS network namespace instead of joining a bridge network.
-- Arcane uses the `arcane` bridge network at `10.68.10.0/24` and publishes TCP port `3552` only on `NAS_IP`.
 
 Because Plex uses host networking, every listener opened by the Plex container is a listener on the NAS host. The Compose file does not enumerate those ports. Its health check and normal web interface use port `32400`.
 
-The Arcane and Plex services are not automatically routed through the Cloudflare Tunnel. Keep NAS ports restricted to trusted LANs unless you create a separate reviewed access design.
+Plex is not automatically routed through the Cloudflare Tunnel. Keep NAS ports restricted to trusted LANs unless you create a separate reviewed access design.
 
 ## Published and referenced ports
 
@@ -93,9 +81,6 @@ The Arcane and Plex services are not automatically routed through the Cloudflare
 | cloudflared | `2000` | Container-only readiness/metrics endpoint |
 | Authelia | `9091`, `9959` | Container-only web/auth and metrics endpoints |
 | Plex | Host network; web on `32400` | Listens directly through the NAS network namespace |
-| Arcane | `${NAS_IP}:3552` | Explicit NAS LAN bind |
-| `unraid.example.com` backend | `${UNRAID_IP}:3480` | Existing LAN service referenced by Traefik; not created or published by HavenStack Compose |
-| `nas.example.com` backend | `${NAS_IP}:5080` | Existing LAN service referenced by Traefik; not created or published by HavenStack Compose |
 
 Internal application ports such as Vaultwarden `8080`, Grafana `3000`, qBittorrent `8090`, and Radarr `7878` are reachable only by containers on their shared Docker networks unless another configuration exposes them.
 
@@ -135,6 +120,5 @@ Common symptoms:
 | Traefik `404` | Hostname and matching dynamic router |
 | Traefik `502` for one app | Backend health and shared network membership |
 | Authelia redirect or denial | Middleware, cookie domain, user group, factor, and rule order |
-| NAS backend unavailable | `NAS_IP`, LAN firewall, and the service listening on the referenced port |
 
 Do not publish a host port simply to bypass a networking error. Fix the intended route or network membership.

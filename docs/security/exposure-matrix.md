@@ -52,21 +52,12 @@ Replace `DOMAIN` with the configured domain.
 | `https://sonarr.DOMAIN` | Sonarr at `sonarr:8989` | Rate limit, security headers, Authelia | Explicit `admins` group plus Authelia two-factor authentication; native application auth is runtime configuration | Internal API clients bypass the public route |
 | `https://profilarr.DOMAIN` | Profilarr at `profilarr:6868` | Rate limit, security headers, Authelia | Explicit `admins` group plus Authelia two-factor authentication; native application auth is runtime configuration | Review profile changes before applying them |
 | `https://seerr.DOMAIN` | Seerr at `seerr:5055` | Rate limit, security headers, Authelia | Falls through to Authelia's wildcard `one_factor` policy, then Seerr's own authentication | This is intentionally weaker than the administrator-only routes; review the allowed audience |
-| `https://unraid.DOMAIN` | `http://UNRAID_IP:3480` | Rate limit, security headers, Authelia | Falls through to Authelia `one_factor`, then any authentication provided by the host service | Port, scheme, service, and native authentication are environment-specific |
-| `https://nas.DOMAIN` | `http://NAS_IP:5080` | Rate limit, security headers, Authelia | Falls through to Authelia `one_factor`, then any authentication provided by the host service | Port, scheme, service, and native authentication are environment-specific |
-
-The `unraid` and `nas` routers are high-impact management routes. The repository cannot confirm what is listening on ports `3480` and `5080`, whether those services expect HTTP, or how they authenticate. Remove or strengthen these routes if they do not match the real hosts. A direct LAN connection to either host service bypasses Traefik and Authelia entirely.
-
-The separate DDNS name from `CLOUDFLARE_DDNS_DOMAINS` is not a Tunnel route and has no matching Traefik router in the repository. It can reveal the home public IP. It does not expose a service by itself, but router port forwards or other host listeners outside this repository could make that address useful to an attacker.
 
 ## Direct LAN and host exposure
 
 | Service | Direct endpoint | Protection | Boundary |
 | --- | --- | --- | --- |
 | Plex | NAS host networking; primary Web UI at `http://NAS_IP:32400/web` | Plex native authentication and NAS firewall | No Traefik or Authelia route. Host networking may expose additional Plex listeners selected by Plex itself; inspect the running host |
-| Arcane | `http://NAS_IP:3552` | Arcane native authentication and NAS firewall | Published only on the configured NAS address, but reachable from every routed network allowed to that address |
-| Unraid management origin | `http://UNRAID_IP:3480` in current Traefik config | Environment-specific native authentication | Service is outside Compose; direct access bypasses Authelia |
-| NAS management origin | `http://NAS_IP:5080` in current Traefik config | Environment-specific native authentication | Service is outside Compose; direct access bypasses Authelia |
 
 No Unraid Compose service declares a `ports:` mapping. qBittorrent, Prowlarr, Radarr, Sonarr, Seerr, Profilarr, Homepage, Vaultwarden, Nextcloud, Traefik, Authelia, Prometheus, Blackbox Exporter, and Grafana are therefore not directly published on an Unraid LAN address by these Compose files.
 
@@ -79,7 +70,6 @@ These endpoints are not host port mappings. They are reachable only where Docker
 | Stack and service | Internal endpoint or behavior | Reachability in the current design |
 | --- | --- | --- |
 | Edge: cloudflared | Metrics/readiness on `cloudflared:2000`; outbound Tunnel connection | Metrics on `monitoring_backend`; public requests return through the established outbound tunnel |
-| Edge: Cloudflare DDNS | Outbound Cloudflare API and public-IP lookup | No inbound service or Traefik router |
 | Edge: Traefik | HTTP ingress `8080`, health `8082`, metrics `8084`, internal dashboard service | `8080` from cloudflared; health/metrics from monitoring; selected dashboard exposed only through its public router |
 | Edge: Authelia | Web/forward-auth `9091`, metrics `9959` | Forward-auth from Traefik, metrics/health from monitoring, portal through `auth.DOMAIN` |
 | Apps: Homepage | `homepage:3000` | Traefik and Blackbox Exporter through `homepage_backend`; public apex router |
@@ -99,7 +89,6 @@ These endpoints are not host port mappings. They are reachable only where Docker
 | Monitoring: Blackbox Exporter | `blackbox-exporter:9115` | Monitoring plus application probe networks; no public router |
 | Monitoring: Grafana | `grafana:3000` | `monitoring_backend`; public Traefik router with Authelia |
 | NAS: Plex | Host network rather than an internal Docker endpoint | Direct NAS/LAN boundary described above; probed by Blackbox Exporter at `NAS_IP:32400` |
-| NAS: Arcane | Container `3552` on its `arcane` bridge | Published as `NAS_IP:3552`; no Tunnel route |
 
 Docker network isolation is not authentication. Any compromised container attached to a shared backend can attempt to reach peers on that backend. The `auth_backend`, `homepage_backend`, `monitoring_backend`, and `nextcloud_backend` networks have Docker's `internal` flag; other networks provide the egress required by their services.
 
@@ -107,7 +96,6 @@ Docker network isolation is not authentication. Any compromised container attach
 
 | Service | Host access | Risk and control |
 | --- | --- | --- |
-| Arcane | `/var/run/docker.sock:/var/run/docker.sock:ro` | The `:ro` bind protects the socket path from filesystem modification; it does not make Docker API calls read-only. Arcane can perform management operations with host-wide impact. Treat Arcane access as Docker-administrator access |
 | Plex | `/dev/dri:/dev/dri` | Grants access to host graphics devices for transcoding. Restrict device permissions and remove the mapping deliberately when it is not needed |
 | qBittorrent VPN | Linux `NET_ADMIN` capability | Required for the VPN interface and firewall. A compromise has greater network-control capability inside this container than a normal unprivileged service |
 | Traefik and applications | Bind-mounted configuration and persistent data | A compromised service can read or modify whatever its container user and mount mode permit; `:ro` configuration mounts reduce this scope |
@@ -122,7 +110,7 @@ Docker network isolation is not authentication. Any compromised container attach
 - Authelia policies apply only to routers with the forward-auth middleware.
 - Homepage, normal Vaultwarden, and Nextcloud routes do not use Authelia in the current configuration.
 - Service-to-service calls on Docker networks do not pass through Authelia; they rely on application API keys or other native credentials.
-- LAN access to Plex, Arcane, or the `3480`/`5080` origins does not pass through Authelia.
+- LAN access to Plex does not pass through Authelia.
 - The Authelia wildcard `one_factor` rule applies to unmatched domains only when their Traefik router invokes Authelia. It does not globally protect every wildcard hostname.
 
 ## Verify the real deployment
@@ -141,25 +129,23 @@ List listening host sockets with the tool available on the platform, for example
 ss -lntup
 ```
 
-Review the output for listeners on `0.0.0.0`, `::`, `NAS_IP`, and `UNRAID_IP`. Confirm the Cloudflare dashboard contains only the intended apex and wildcard Tunnel routes plus the final `http_status:404` catch-all. Check the router for unexpected port forwards and verify the NAS and Unraid firewall rules.
+Review the output for listeners on `0.0.0.0`, `::`, and `NAS_IP`. Confirm the Cloudflare dashboard contains only the intended apex and wildcard Tunnel routes plus the final `http_status:404` catch-all. Check the router for unexpected port forwards and verify the NAS and Unraid firewall rules.
 
 Perform functional tests from three places:
 
 1. an external network, to verify only intended Tunnel hostnames respond;
-2. the trusted LAN, to verify the direct Plex, Arcane, and management boundaries;
+2. the trusted LAN, to verify the direct Plex boundary;
 3. an untrusted or guest LAN, to confirm firewall isolation.
 
 ## Environment-specific uncertainties
 
 The following cannot be proven from this repository:
 
-- what services actually listen on `UNRAID_IP:3480` and `NAS_IP:5080`;
-- whether host firewalls restrict Plex, Arcane, or management interfaces;
+- whether host firewalls restrict Plex;
 - whether the router has unrelated inbound port forwards;
 - whether Cloudflare Access, WAF rules, or account-level controls add protection beyond the repository;
-- the native authentication settings selected during first-run setup for Servarr applications, Seerr, Plex, and Arcane;
+- the native authentication settings selected during first-run setup for Servarr applications, Seerr, and Plex;
 - Plex's complete listener set under host networking;
-- whether the dedicated DDNS address is used by a service outside HavenStack;
 - whether a running container or local override publishes additional ports.
 
 Record the verified answers in a private deployment inventory. Recheck this matrix after changes to Compose files, Traefik routers, Authelia policies, Cloudflare routes, host networking, or firewall rules.

@@ -7,11 +7,11 @@ HavenStack updates are reviewed changes to Compose image references and reposito
 `.github/dependabot.yml` checks:
 
 - GitHub Actions every Monday at 08:00 America/Toronto;
-- Docker Compose images in all seven stack directories every Monday at 08:30;
+- Docker Compose images in all six stack directories every Monday at 08:30;
 - minor and patch image updates as grouped version-update pull requests;
 - other eligible updates, such as major versions, outside that minor/patch group.
 
-Each pull request targeting `main` runs the Compose validation workflow with the example environment files. This confirms that all seven YAML models render successfully. It does **not** start containers, test a database migration, verify a VPN, mount a NAS share, or prove application compatibility.
+Each pull request targeting `main` runs the Compose validation workflow with the example environment files. This confirms that all six YAML models render successfully. It does **not** start containers, test a database migration, verify a VPN, mount a NAS share, or prove application compatibility.
 
 Each pull request targeting `main` also runs the documentation validation workflow. It checks that internal Markdown links and anchors resolve and that image versions pinned in the documentation match the Compose files. When a Dependabot pull request changes an image tag, this check fails until the documentation pages that mention the old version are updated in the same pull request. A separate scheduled workflow checks the external documentation links weekly.
 
@@ -19,14 +19,11 @@ Merging a pull request only changes `main`. Pushing a `v*` tag creates a GitHub 
 
 ## Image version policy in this repository
 
-Most services use explicit version tags. Two areas need additional care:
-
-- all five Nextcloud component images use `latest`;
-- Arcane uses `ghcr.io/getarcaneapp/arcane:latest`, while its stack guide notes that current upstream examples use a different image name.
+Most services use explicit version tags. All five Nextcloud component images use `latest` and need additional care.
 
 A version tag is easier to read than a digest but may still be moved by a registry. `latest` does not identify a version at all. This repository currently does not pin image digests, so record the actual image IDs and repository digests before every deployment change.
 
-Dependabot may not be able to propose a meaningful version change for an image already written as `latest`. Review [Nextcloud](../stacks/nextcloud.md#updates-and-rollback) and [Arcane](../stacks/arcane.md) separately rather than treating `pull` as a safe update plan.
+Dependabot may not be able to propose a meaningful version change for an image already written as `latest`. Review [Nextcloud](../stacks/nextcloud.md#updates-and-rollback) separately rather than treating `pull` as a safe update plan.
 
 ## Before accepting an update
 
@@ -84,8 +81,6 @@ docker compose --env-file unraid/.env \
 docker compose --env-file nas/.env \
   -f nas/plex/compose.yml config --quiet
 
-docker compose --env-file nas/.env \
-  -f nas/arcane/compose.yml config --quiet
 ```
 
 No output means that Compose accepted the model. It says nothing about runtime health or data compatibility.
@@ -153,7 +148,7 @@ Then complete the affected stack guide's functional checks. At minimum, confirm:
 - qBittorrent still uses the VPN and kill switch;
 - monitoring shows fresh samples.
 
-Cloudflare DDNS has no Compose health check, so verify its logs and exact DNS record. A healthy qBittorrent web interface does not prove that the VPN is connected.
+A healthy qBittorrent web interface does not prove that the VPN is connected.
 
 ## Updating configuration without changing an image
 

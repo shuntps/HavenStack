@@ -31,7 +31,6 @@ Use [`unraid/.env.example`](../../unraid/.env.example) as the authoritative list
 | Variable | Required value |
 | --- | --- |
 | `TZ` | An IANA timezone such as `America/Toronto` |
-| `UNRAID_IP` | The stable LAN address of Unraid |
 | `NAS_IP` | The stable LAN address of the NAS |
 | `UID`, `GID` | Numeric identity that owns local Unraid application data |
 | `NAS_UID`, `NAS_GID` | Numeric identity with read/write access to the mounted NAS media data |
@@ -69,30 +68,9 @@ Replace all three credential placeholders:
 
 Nextcloud stores its main user data at `CLOUD_PATH` and its application, database, and Redis state in Docker named volumes. Backups must include both types of storage.
 
-### Cloudflare Tunnel and DDNS
+### Cloudflare Tunnel
 
-These credentials have different purposes:
-
-| Variable | Purpose |
-| --- | --- |
-| `CLOUDFLARED_TUNNEL_TOKEN` | Runs the remotely managed Cloudflare Tunnel |
-| `CLOUDFLARE_DDNS_API_TOKEN` | Lets the DDNS container update its dedicated DNS record |
-| `CLOUDFLARE_DDNS_DOMAINS` | Comma-separated names managed by that DDNS container |
-
-Copy the tunnel token from the Cloudflare tunnel configuration. Create a separate, narrowly scoped API token that can edit DNS records in the selected Cloudflare zone for the DDNS container.
-
-> **Do not put the apex domain and wildcard in `CLOUDFLARE_DDNS_DOMAINS` when those same names are published through Cloudflare Tunnel.** Those names must keep their Tunnel DNS records — created automatically for exact hostnames and manually for the wildcard — while DDNS tries to manage A/AAAA records; Cloudflare cannot use both record types at the same name.
-
-The repository uses a dedicated exact hostname for DDNS:
-
-```dotenv
-CLOUDFLARE_DDNS_API_TOKEN=replace-with-a-scoped-cloudflare-api-token
-CLOUDFLARE_DDNS_DOMAINS=ddns.example.com
-```
-
-Replace `example.com` with your real domain. An exact `ddns.example.com` record remains separate from the apex and wildcard Tunnel records. The Compose file disables IPv6 updates with `IP6_PROVIDER=none`, so the DDNS container updates the public IPv4 address for this hostname.
-
-The dedicated DDNS hostname is not a HavenStack web application and does not need a published application route in the Tunnel. Because it can reveal the home public IP, use it only for a service that intentionally needs direct DNS resolution and protect that service separately.
+Copy `CLOUDFLARED_TUNNEL_TOKEN` from the remotely managed Cloudflare Tunnel configuration. The token authorizes the connector to run the Tunnel and must remain private.
 
 ### Application and authentication credentials
 
@@ -142,19 +120,9 @@ Use [`nas/.env.example`](../../nas/.env.example) as the authoritative list.
 | --- | --- |
 | `TZ` | Same IANA timezone used on Unraid |
 | `NAS_IP` | Stable NAS LAN address; it must match `NAS_IP` in `unraid/.env` |
-| `UID`, `GID` | Numeric identity that owns Plex, Arcane, and media files on the NAS |
-| `DATA_PATH` | Persistent application-data root; the stacks use `plex` and `arcane` below it |
+| `UID`, `GID` | Numeric identity that owns Plex and media files on the NAS |
+| `DATA_PATH` | Persistent application-data root; the Plex stack uses `plex` below it |
 | `MEDIA_PATH` | Root of the Plex media library |
-| `ENCRYPTION_KEY` | Unique 32-byte Arcane encryption key |
-| `JWT_SECRET` | Different 32-byte Arcane JWT secret |
-
-Generate `ENCRYPTION_KEY` and `JWT_SECRET` separately:
-
-```bash
-openssl rand -hex 32
-```
-
-The command prints 64 hexadecimal characters representing 32 random bytes. Run it separately for each value and do not reuse either output anywhere else. The Arcane stack mounts the local Docker socket read-only; only deploy it on a trusted NAS because access to Docker management remains security-sensitive.
 
 The Plex Compose file maps `/dev/dri`. Confirm the device and its permissions as described in the [prerequisites](prerequisites.md).
 
@@ -290,9 +258,6 @@ Run these commands on the NAS:
 ```bash
 docker compose --env-file nas/.env \
   -f nas/plex/compose.yml config --quiet
-
-docker compose --env-file nas/.env \
-  -f nas/arcane/compose.yml config --quiet
 ```
 
 No output and exit code `0` means the Compose model passed validation. An error normally identifies a missing variable, invalid interpolation, or YAML/Compose problem.

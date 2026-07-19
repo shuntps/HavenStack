@@ -1,6 +1,6 @@
 # Quick start
 
-This page is the shortest supported path to a first HavenStack deployment. It assumes the reference design: Unraid runs the web and automation stacks, while a separate NAS provides storage and runs Plex and Arcane.
+This page is the shortest supported path to a first HavenStack deployment. It assumes the reference design: Unraid runs the web and automation stacks, while a separate NAS provides storage and runs Plex.
 
 HavenStack is not a one-click installer. Read the linked detailed guide whenever a step does not match your environment.
 
@@ -53,10 +53,9 @@ Follow [Configure the Cloudflare Tunnel](cloudflare-tunnel.md). The reference se
 - `example.com` routed to `http://traefik:8080`;
 - `*.example.com` routed to `http://traefik:8080`;
 - a proxied wildcard `CNAME` DNS record pointing to the tunnel, created manually when Cloudflare does not create it;
-- a final `http_status:404` catch-all;
-- `ddns.example.com` managed separately by the DDNS updater.
+- a final `http_status:404` catch-all.
 
-Replace `example.com` with `DOMAIN`. Do not let DDNS manage the Tunnel apex or wildcard records.
+Replace `example.com` with `DOMAIN`.
 
 ## 5. Validate and deploy
 
@@ -78,14 +77,13 @@ Replace `ENVIRONMENT_FILE` and `COMPOSE_FILE` with the values from the table.
 | Host | Order | Environment file | Compose file |
 | --- | ---: | --- | --- |
 | NAS | Independent | `nas/.env` | `nas/plex/compose.yml` |
-| NAS | Independent | `nas/.env` | `nas/arcane/compose.yml` |
 | Unraid | 1 | `unraid/.env` | `unraid/edge/compose.yml` |
 | Unraid | 2 | `unraid/.env` | `unraid/apps/compose.yml` |
 | Unraid | 3 | `unraid/.env` | `unraid/nextcloud/compose.yml` |
 | Unraid | 4 | `unraid/.env` | `unraid/servarr/compose.yml` |
 | Unraid | 5 | `unraid/.env` | `unraid/monitoring/compose.yml` |
 
-The NAS stacks do not depend on one another. If the NAS supplies `HOMELAB_PATH` or `CLOUD_PATH`, bring the NAS and those mounts online before starting Servarr or Nextcloud.
+If the NAS supplies `HOMELAB_PATH` or `CLOUD_PATH`, bring the NAS and those mounts online before starting Servarr or Nextcloud.
 
 On Unraid, always start `edge` first. It creates the external Docker networks required by the other Unraid stacks.
 
@@ -95,7 +93,7 @@ For copy-and-paste commands, expected states, logs, and common errors, use [Depl
 
 ## 6. Verify the installation
 
-Wait for health-checked services to become `healthy`. A temporary `starting` status is normal, especially for Nextcloud. cloudflare-ddns has no Compose health check and normally shows only `Up`.
+Wait for health-checked services to become `healthy`. A temporary `starting` status is normal, especially for Nextcloud.
 
 If a service does not become healthy, inspect its stack logs. For example:
 
@@ -110,7 +108,6 @@ Use the [stack guides](../stacks/README.md) for application-specific setup.
 
 ## Safety rules
 
-- Review the preconfigured `unraid.example.com` and `nas.example.com` management routes in `unraid/edge/config/traefik/dynamic/external.yml` before starting `edge`; remove them if you do not need them.
 - Confirm remote NAS mounts before every stack start that can write to them.
 - Keep secrets and authentication files out of Git.
 - Do not expose additional host ports as a troubleshooting shortcut.

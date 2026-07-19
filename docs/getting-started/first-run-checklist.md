@@ -48,8 +48,6 @@ The repository configures the following routes. Replace `example.com` with your 
 | `https://sonarr.example.com` | Sonarr |
 | `https://seerr.example.com` | Seerr |
 | `https://profilarr.example.com` | Profilarr |
-| `https://unraid.example.com` | Configured Unraid-side external service |
-| `https://nas.example.com` | Configured NAS-side external service |
 
 - [ ] Confirm the Cloudflare Tunnel reports a healthy connector.
 - [ ] Confirm every intended public hostname is configured in Cloudflare. In this topology, tunneled web traffic must reach Traefik on `http://traefik:8080` through the shared `edge_ingress` network.
@@ -57,7 +55,6 @@ The repository configures the following routes. Replace `example.com` with your 
 - [ ] Confirm each HTTPS URL has a valid certificate and does not produce a redirect loop.
 - [ ] Test protected URLs in a private browser window so an existing session does not hide authentication problems.
 - [ ] Confirm direct host ports are not unexpectedly reachable from untrusted networks. Most Unraid applications are intentionally reachable through Traefik rather than published host ports.
-- [ ] Review the Cloudflare DDNS logs and confirm it updates only the dedicated exact record, such as `ddns.example.com`. Confirm the apex and wildcard records still point to the Tunnel.
 
 The current routing policy intentionally differs by application:
 
@@ -136,7 +133,7 @@ Detailed field-by-field configuration belongs in the individual stack guides. Fo
 - [ ] Decide whether alerts are required. The repository currently provisions no alert rules or notification destinations, so add and test both before relying on monitoring for incident notification.
 - [ ] Remember that monitoring data under `${APPDATA_PATH}/prometheus` has finite retention and is not a backup of application data.
 
-## NAS services
+## NAS service
 
 ### Plex
 
@@ -145,13 +142,6 @@ Detailed field-by-field configuration belongs in the individual stack guides. Fo
 - [ ] If hardware transcoding is required, confirm `/dev/dri` exists and perform a controlled transcode test.
 - [ ] Protect Plex's host-networked ports with NAS and network firewall rules.
 - [ ] Back up `${DATA_PATH}/plex`; media files require a separate backup decision based on their size and replaceability.
-
-### Arcane
-
-- [ ] Confirm Arcane is reachable at `http://NAS_IP:3552` only from intended networks.
-- [ ] Confirm `ENCRYPTION_KEY` and `JWT_SECRET` are unique, securely backed up, and will remain stable across redeployments.
-- [ ] Review who can sign in. Arcane can access the Docker API through the socket. A read-only bind mount does not make Docker API operations read-only, so treat Arcane as highly privileged access to the NAS host.
-- [ ] Back up `${DATA_PATH}/arcane` together with the keys required to read its data.
 
 ## Backups and recovery readiness
 

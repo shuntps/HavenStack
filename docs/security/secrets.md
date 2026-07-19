@@ -10,8 +10,7 @@ The example files are safe to commit because they contain placeholders. Their po
 
 | Location | Sensitive contents |
 | --- | --- |
-| `unraid/.env` | Cloudflare tokens, Authelia secrets, Nextcloud credentials, Vaultwarden admin token, Grafana password, and VPN credentials |
-| `nas/.env` | Arcane encryption and JWT secrets |
+| `unraid/.env` | Cloudflare Tunnel token, Authelia secrets, Nextcloud credentials, Vaultwarden admin token, Grafana password, and VPN credentials |
 | `unraid/edge/config/authelia/users.yml` | User identities, groups, and Argon2id password hashes |
 | `${APPDATA_PATH}/qbittorrentvpn/openvpn` | VPN profile, certificates, and possibly private keys |
 | `${APPDATA_PATH}/qbittorrentvpn/supervisord.log` | The randomly generated initial qBittorrent Web UI password may appear here |
@@ -19,7 +18,7 @@ The example files are safe to commit because they contain placeholders. Their po
 | Application-data directories and Docker named volumes | Account databases, sessions, API keys, tokens, integration credentials, and application state |
 | Backups and exported diagnostics | Copies of all of the above, and sometimes expanded configuration or logs |
 
-IP addresses, domains, usernames, paths, UID/GID values, and `CLOUDFLARE_DDNS_DOMAINS` are not passwords, but together they form useful infrastructure inventory. Protect the complete configuration even when individual values are not secret.
+IP addresses, domains, usernames, paths, and UID/GID values are not passwords, but together they form useful infrastructure inventory. Protect the complete configuration even when individual values are not secret.
 
 `SECURITY_TXT_CONTACT` is intentionally published by the Homepage. Do not place a private personal address there unless you intend it to be public.
 
@@ -36,16 +35,6 @@ openssl rand -hex 64
 ```
 
 The result contains 128 hexadecimal characters. Run the command separately for every variable. Hexadecimal output is convenient for the Nextcloud database and Redis values because it avoids punctuation that can be misinterpreted in connection strings.
-
-### Arcane secrets
-
-Arcane requires a 32-byte `ENCRYPTION_KEY`; use a separate 32-byte value for `JWT_SECRET`:
-
-```bash
-openssl rand -hex 32
-```
-
-Each result contains 64 hexadecimal characters representing 32 bytes. Generate the two values independently.
 
 ### Authelia user passwords
 
@@ -79,7 +68,6 @@ The admin login uses the original password, not the PHC string. Keep both privat
 Do not replace provider-issued credentials with OpenSSL output. Obtain these from their authoritative service:
 
 - `CLOUDFLARED_TUNNEL_TOKEN` from the remotely managed Cloudflare Tunnel;
-- `CLOUDFLARE_DDNS_API_TOKEN` from Cloudflare with the narrowest DNS permissions and zone scope that work;
 - `VPN_USER`, `VPN_PASS`, the `.ovpn` profile, and certificates from the VPN provider;
 - application API keys from the application that generated them.
 
@@ -90,7 +78,6 @@ Do not replace provider-issued credentials with OpenSSL output. Obtain these fro
 | Value | Purpose | Rotation consequence |
 | --- | --- | --- |
 | `CLOUDFLARED_TUNNEL_TOKEN` | Authorizes `cloudflared` to connect this tunnel | The connector must be recreated with the new token; revoke the old token only after the replacement works |
-| `CLOUDFLARE_DDNS_API_TOKEN` | Updates the dedicated DDNS record | The DDNS container must receive the new token; a revoked or under-scoped token stops updates |
 | `AUTH_JWT_SECRET` | Signs Authelia identity-validation/reset tokens | Outstanding reset or validation tokens become invalid |
 | `AUTH_SESSION_SECRET` | Protects Authelia sessions | Existing browser sessions should be expected to end |
 | `AUTH_STORAGE_ENCRYPTION_KEY` | Encrypts sensitive Authelia storage values | Changing it without a supported re-encryption procedure can make stored data unreadable |
@@ -135,15 +122,6 @@ Prometheus data and logs can reveal internal hostnames, URLs, availability patte
 ### Plex
 
 Plex has no credential in `nas/.env`. Its account tokens, server identity, database, and preferences are stored below `${DATA_PATH}/plex`. A copy of that directory can grant meaningful access to the server account and library metadata; protect it like a credential.
-
-### Arcane
-
-| Value | Rotation consequence |
-| --- | --- |
-| `ENCRYPTION_KEY` | A different key can make Arcane's encrypted stored data unreadable; preserve the original with every backup |
-| `JWT_SECRET` | Existing Arcane sessions and tokens become invalid |
-
-Arcane's own accounts and state are stored below `${DATA_PATH}/arcane`. Because Arcane controls the NAS Docker API, compromise of its credentials can become compromise of the host.
 
 ## Store local files safely
 
