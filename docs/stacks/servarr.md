@@ -267,6 +267,6 @@ Use the NAS LAN address and port `32400`, not `plex` as a Docker hostname. Plex 
 - [Radarr](https://wiki.servarr.com/radarr)
 - [Sonarr](https://wiki.servarr.com/sonarr)
 - [Seerr documentation](https://docs.seerr.dev/)
-- [Profilarr documentation](https://dictionarry.dev/profilarr-setup/)
+- [Profilarr documentation](https://dictionarry.dev/)
 - [binhex qBittorrent VPN image](https://github.com/binhex/arch-qbittorrentvpn)
 - [LinuxServer Radarr image and shared-path guidance](https://docs.linuxserver.io/images/docker-radarr/)

@@ -14,12 +14,12 @@ body:
     attributes:
       label: Affected area
       options:
-        - Edge (Traefik, Authelia, cloudflared, DDNS)
+        - Edge (Traefik, Authelia, cloudflared)
         - Apps (Homepage, Vaultwarden)
         - Nextcloud
         - Servarr / qBittorrent
         - Monitoring (Prometheus, Grafana, Blackbox)
-        - NAS (Plex, Arcane)
+        - NAS (Plex)
         - Documentation
         - CI / repository tooling
     validations:

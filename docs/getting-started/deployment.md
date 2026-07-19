@@ -4,7 +4,7 @@ This guide takes you from prepared configuration files to running containers. Ru
 
 HavenStack is split between two machines:
 
-- The **NAS stacks** run Plex and Arcane. They can be deployed independently.
+- The **NAS stack** runs Plex.
 - The **Unraid stacks** run the edge, application, Nextcloud, Servarr, and monitoring services. On Unraid, deploy `edge` first because it creates the shared Docker networks used by the other stacks.
 
 If the NAS provides the storage mounted by Unraid, make sure the NAS and those mounts are available before starting Nextcloud or Servarr.
@@ -17,7 +17,7 @@ You should already have:
 - A copy of this repository on each machine that will run a stack.
 - `unraid/.env` created from `unraid/.env.example` on Unraid.
 - `nas/.env` created from `nas/.env.example` on the NAS.
-- Every `replace-with-*` value replaced with a real value, including the scoped Cloudflare DDNS API token.
+- Every `replace-with-*` value replaced with a real value.
 - The directories referenced by `APPDATA_PATH`, `HOMELAB_PATH`, `CLOUD_PATH`, `DATA_PATH`, and `MEDIA_PATH` created and writable by the configured user IDs.
 - The NAS shares used by `HOMELAB_PATH` and `CLOUD_PATH` mounted on Unraid. Do not continue if these paths are supposed to be remote mounts but are currently empty local directories.
 - `unraid/edge/config/authelia/users.yml` created from `users.yml.example`, with a real Argon2id password hash.
@@ -36,9 +36,6 @@ Run these commands on the NAS:
 ```bash
 docker compose --env-file nas/.env \
   -f nas/plex/compose.yml config --quiet
-
-docker compose --env-file nas/.env \
-  -f nas/arcane/compose.yml config --quiet
 ```
 
 ### Unraid
@@ -84,7 +81,6 @@ For a new NAS installation:
 
 ```bash
 docker compose --env-file nas/.env -f nas/plex/compose.yml pull
-docker compose --env-file nas/.env -f nas/arcane/compose.yml pull
 ```
 
 For a new Unraid installation:
@@ -99,36 +95,28 @@ docker compose --env-file unraid/.env -f unraid/monitoring/compose.yml pull
 
 For an existing installation, do not treat `pull` as a complete update procedure. Back up stateful services and review the image changes first, especially for images using the `latest` tag.
 
-## 3. Deploy the NAS stacks
+## 3. Deploy the NAS stack
 
-Plex and Arcane do not depend on one another. Start either or both on the NAS:
+Start Plex on the NAS:
 
 ```bash
 docker compose --env-file nas/.env \
   -f nas/plex/compose.yml up -d
-
-docker compose --env-file nas/.env \
-  -f nas/arcane/compose.yml up -d
 ```
 
-Check each deployed stack:
+Check the deployed stack:
 
 ```bash
 docker compose --env-file nas/.env -f nas/plex/compose.yml ps
-docker compose --env-file nas/.env -f nas/arcane/compose.yml ps
 ```
 
-Plex uses host networking and normally listens on port `32400`. Arcane is bound to `${NAS_IP}:3552`. Confirm that these ports are reachable only from networks you trust.
+Plex uses host networking and normally listens on port `32400`. Confirm that this port is reachable only from networks you trust.
 
 ## 4. Deploy the Unraid stacks
 
 ### Start the edge stack first
 
-The edge stack creates `edge_ingress`, `auth_backend`, `apps_backend`, `servarr_backend`, `homepage_backend`, `monitoring_backend`, and `ddns_egress`. Other Unraid stacks refer to several of these as external networks.
-
-Starting the edge stack also publishes every route defined in `unraid/edge/config/traefik/dynamic/`, including the `unraid.example.com` and `nas.example.com` management routes from [`external.yml`](../../unraid/edge/config/traefik/dynamic/external.yml). Those two routes point at host management interfaces and rely on Authelia's wildcard one-factor rule. Before the first start, delete or comment out their routers if you do not need them, or restrict them to the `admins` group with two-factor authentication. See [Environment-specific external routes](../stacks/edge.md#environment-specific-external-routes).
-
-The DDNS container manages only the dedicated hostname configured in `CLOUDFLARE_DDNS_DOMAINS`; it must not manage the Tunnel's apex or wildcard records. Start the complete edge stack:
+The edge stack creates `edge_ingress`, `auth_backend`, `apps_backend`, `servarr_backend`, `homepage_backend`, and `monitoring_backend`. Other Unraid stacks refer to several of these as external networks. Start the complete edge stack:
 
 ```bash
 docker compose --env-file unraid/.env \
@@ -141,7 +129,7 @@ Check it before continuing:
 docker compose --env-file unraid/.env -f unraid/edge/compose.yml ps
 ```
 
-It is normal for health status to show `starting` briefly. Wait for Traefik, Authelia, and cloudflared to become healthy. Cloudflare DDNS has no Compose health check, so it may show `Up` without a health status.
+It is normal for health status to show `starting` briefly. Wait for Traefik, Authelia, and cloudflared to become healthy.
 
 If the edge services remain unhealthy, inspect their logs before starting more stacks:
 
@@ -263,7 +251,7 @@ Then retry the dependent stack.
 
 ### Docker reports an overlapping network range
 
-The configured `10.88.x.0/24` or `10.68.10.0/24` range conflicts with another Docker, LAN, or VPN network. Resolve the subnet plan before starting the stacks. If you change `servarr_backend`, also review `LAN_NETWORK` because qBittorrent must permit that backend network.
+The configured `10.88.x.0/24` range conflicts with another Docker, LAN, or VPN network. Resolve the subnet plan before starting the stacks. If you change `servarr_backend`, also review `LAN_NETWORK` because qBittorrent must permit that backend network.
 
 ### `permission denied` or a container cannot write data
 

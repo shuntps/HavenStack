@@ -11,7 +11,7 @@ The reference deployment expects these two Docker hosts:
 | Host | Responsibilities | Repository directory |
 | --- | --- | --- |
 | Unraid | Cloudflare Tunnel, Traefik, Authelia, Homepage, Vaultwarden, Nextcloud, Servarr, qBittorrent, Prometheus, and Grafana | `unraid/` |
-| NAS | Plex, Arcane, persistent media, and the storage mounted by Unraid | `nas/` |
+| NAS | Plex, persistent media, and the storage mounted by Unraid | `nas/` |
 
 Both hosts must be able to reach each other over the LAN. Unraid must also be able to read and write the NAS shares used for media and Nextcloud data.
 
@@ -23,8 +23,8 @@ There is no universal hardware minimum because media size, Nextcloud usage, and 
 
 | Host | Sum of configured container memory limits | Notes |
 | --- | ---: | --- |
-| Unraid | 11,136 MiB (10.875 GiB) | Includes every Unraid stack |
-| NAS | 1,536 MiB (1.5 GiB) | Plex and Arcane |
+| Unraid | 11,072 MiB (10.8125 GiB) | Includes every Unraid stack |
+| NAS | 1,024 MiB (1 GiB) | Plex |
 
 These values are upper limits, not reserved memory and not a guarantee that the applications will perform well with less. Leave additional memory for the host operating system, Docker, filesystem cache, and workload spikes. The repository does not define CPU limits.
 
@@ -48,7 +48,7 @@ Do not count the live NAS share itself as a backup.
 
 ## Docker and command-line access
 
-Install Docker Engine and the Docker Compose **v2 plugin** on both hosts. HavenStack uses the `docker compose` command with a space, not the retired `docker-compose` v1 command.
+Install Docker Engine and the current Docker Compose plugin on both hosts. HavenStack uses the `docker compose` command with a space, not the retired `docker-compose` v1 command.
 
 Verify each host:
 
@@ -57,7 +57,7 @@ docker version
 docker compose version
 ```
 
-The second command should report `Docker Compose version v2...`. The account used for deployment must be allowed to talk to the Docker daemon. Avoid making the Docker socket broadly writable to solve a permission problem.
+Both commands must succeed. Docker Compose may report a newer major version than the original v2 plugin; newer releases are expected to work but are not verified automatically at runtime. The account used for deployment must be allowed to talk to the Docker daemon. Avoid making the Docker socket broadly writable to solve a permission problem.
 
 You also need:
 
@@ -70,7 +70,6 @@ You also need:
 
 Assign stable LAN addresses to Unraid and the NAS, using either DHCP reservations or the network configuration supported by each platform. The example addresses in the repository are not defaults that must be retained:
 
-- `UNRAID_IP=192.168.1.20`
 - `NAS_IP=192.168.1.10`
 
 Record the real addresses. From Unraid, verify that the NAS is reachable; from the NAS, verify the Unraid address in the same way:
@@ -81,18 +80,11 @@ ping -c 3 192.168.1.10
 
 Replace the address before running the command. A successful test receives replies without packet loss. Some hosts block ICMP; in that case, verify reachability using the host's management page or an existing TCP service.
 
-The current Traefik configuration also assumes that:
-
-- the Unraid management service is reachable at `http://UNRAID_IP:3480`;
-- the NAS management service is reachable at `http://NAS_IP:5080`.
-
-Those ports and schemes are platform-specific. Confirm them before deployment and later adjust [`external.yml`](../../unraid/edge/config/traefik/dynamic/external.yml) if your management services use different endpoints.
-
-Plex uses host networking and normally listens on NAS port `32400`. Arcane binds to `NAS_IP:3552`. Restrict these LAN services to trusted networks with the controls available on the NAS and firewall.
+Plex uses host networking and normally listens on NAS port `32400`. Restrict this LAN service to trusted networks with the controls available on the NAS and firewall.
 
 ## Docker subnet plan
 
-HavenStack assigns fixed subnets to the shared Unraid networks and to Arcane:
+HavenStack assigns fixed subnets to the shared Unraid networks:
 
 | Network | Subnet |
 | --- | --- |
@@ -102,8 +94,6 @@ HavenStack assigns fixed subnets to the shared Unraid networks and to Arcane:
 | `servarr_backend` | `10.88.40.0/24` |
 | `homepage_backend` | `10.88.50.0/24` |
 | `monitoring_backend` | `10.88.60.0/24` |
-| `ddns_egress` | `10.88.70.0/24` |
-| NAS `arcane` | `10.68.10.0/24` |
 
 None of these ranges may overlap your LAN, another Docker network, a site-to-site network, or a VPN route. Inspect the existing Docker networks on each host:
 
@@ -128,13 +118,10 @@ You need:
 - the token generated for that tunnel;
 - two published application routes: the apex domain and its wildcard, both targeting `http://traefik:8080`;
 - a final catch-all rule returning HTTP `404`.
-- a narrowly scoped Cloudflare DNS API token for the dedicated DDNS record.
 
 For a domain named `example.com`, the required routes are `example.com` and `*.example.com`. The detailed procedure is in the [Cloudflare Tunnel guide](cloudflare-tunnel.md).
 
 The tunnel makes outbound connections to Cloudflare, so normal inbound router port forwarding is not required for HavenStack web applications. Both hosts and the containers that need internet access must still be allowed outbound DNS and HTTPS traffic.
-
-Cloudflare Tunnel and dynamic DNS are different features. The reference configuration assigns the apex and wildcard names to the Tunnel and reserves `ddns.example.com` for dynamic DNS. Keep the dedicated DDNS name separate from the Tunnel records. The DDNS setup is explained in the [configuration guide](configuration.md).
 
 ## VPN account and profile
 
@@ -157,7 +144,7 @@ Prepare these host paths before deployment:
 | `APPDATA_PATH` | Unraid | Persistent application configuration, databases, and monitoring data |
 | `HOMELAB_PATH` | Unraid | NAS-backed media and download data shared by qBittorrent, Radarr, and Sonarr |
 | `CLOUD_PATH` | Unraid | NAS-backed Nextcloud data |
-| `DATA_PATH` | NAS | Persistent Plex and Arcane application data |
+| `DATA_PATH` | NAS | Persistent Plex application data |
 | `MEDIA_PATH` | NAS | Plex media library |
 
 Mount the NAS shares at the exact Unraid paths selected for `HOMELAB_PATH` and `CLOUD_PATH`, and configure those mounts to return after a reboot. This step is platform-specific: use the supported Unraid and NAS share/mount tools.
@@ -177,7 +164,7 @@ The numeric identities in the environment files must match the owners of the fil
 
 - Unraid `UID` and `GID` own local application data.
 - Unraid `NAS_UID` and `NAS_GID` must be able to read and write the mounted media share.
-- NAS `UID` and `GID` own the NAS application and media files used by Plex and Arcane.
+- NAS `UID` and `GID` own the NAS application and media files used by Plex.
 
 Find the numeric values on each host:
 

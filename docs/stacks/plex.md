@@ -14,9 +14,9 @@ The container has a `1g` memory limit, a restart policy of `unless-stopped`, and
 
 Plex is independent of the Unraid Docker networks and can be deployed before or after the Unraid stacks. Prepare:
 
-- Docker Engine and Docker Compose v2 on the NAS;
+- Docker Engine and the current Docker Compose plugin on the NAS;
 - a populated `nas/.env`;
-- a stable `NAS_IP`;
+- a stable NAS LAN address;
 - `${DATA_PATH}/plex` with enough space for Plex metadata and databases;
 - `MEDIA_PATH` containing the media library;
 - a `UID:GID` that can read the media and write Plex configuration;
@@ -52,7 +52,6 @@ The stack reads these values from `nas/.env`:
 | Variable | Purpose |
 | --- | --- |
 | `TZ` | Plex timezone |
-| `NAS_IP` | Documented LAN address used to reach the NAS; Plex itself uses host networking |
 | `UID`, `GID` | Numeric identity used by the LinuxServer image |
 | `DATA_PATH` | Parent of the persistent `/config` directory |
 | `MEDIA_PATH` | Host media root mounted at `/media` |

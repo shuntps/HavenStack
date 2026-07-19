@@ -9,12 +9,17 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  validate-compose:
     uses: ./.github/workflows/validate-compose.yml
+
+  validate-docs:
+    uses: ./.github/workflows/validate-docs.yml
 
   release:
     name: Create release
-    needs: validate
+    needs:
+      - validate-compose
+      - validate-docs
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -22,12 +27,36 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag belongs to main
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Tag ${RELEASE_TAG} is not a semantic version."
+            exit 1
+          fi
+
+          git fetch --no-tags origin \
+            "+refs/heads/main:refs/remotes/origin/main"
+
+          tag_commit="$(git rev-parse --verify "${GITHUB_REF}^{commit}")"
+          if ! git merge-base --is-ancestor \
+            "$tag_commit" refs/remotes/origin/main; then
+            echo "::error::Tag ${RELEASE_TAG} does not point to a commit on main."
+            exit 1
+          fi
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          gh release create "${{ github.ref_name }}" \
-            --title "HavenStack ${{ github.ref_name }}" \
+          gh release create "$RELEASE_TAG" \
+            --title "HavenStack $RELEASE_TAG" \
             --generate-notes \
             --verify-tag

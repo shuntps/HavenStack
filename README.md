@@ -28,13 +28,12 @@
 
 | Location | Stack | Services |
 | --- | --- | --- |
-| Unraid | Edge | Traefik, Authelia, Cloudflare Tunnel, Cloudflare DDNS |
+| Unraid | Edge | Traefik, Authelia, Cloudflare Tunnel |
 | Unraid | Apps | Homepage, Vaultwarden |
 | Unraid | Nextcloud | Apache, Nextcloud, PostgreSQL, Redis, Notify Push |
 | Unraid | Servarr | qBittorrent VPN, Prowlarr, Radarr, Sonarr, Seerr, Profilarr |
 | Unraid | Monitoring | Prometheus, Grafana, Blackbox Exporter |
 | NAS | Media | Plex |
-| NAS | Management | Arcane |
 
 ## Repository layout
 
@@ -53,8 +52,7 @@ HavenStack/
 │   ├── servarr/
 │   └── monitoring/
 └── nas/
-    ├── plex/
-    └── arcane/
+    └── plex/
 ```
 
 ## Documentation
@@ -88,11 +86,10 @@ docker compose --env-file unraid/.env -f unraid/servarr/compose.yml up -d
 docker compose --env-file unraid/.env -f unraid/monitoring/compose.yml up -d
 ```
 
-Deploy the required NAS stacks separately:
+Deploy the NAS stack separately:
 
 ```bash
 docker compose --env-file nas/.env -f nas/plex/compose.yml up -d
-docker compose --env-file nas/.env -f nas/arcane/compose.yml up -d
 ```
 
 Review all paths, user IDs, network ranges, domains, and secrets before deployment. Never commit populated environment files.

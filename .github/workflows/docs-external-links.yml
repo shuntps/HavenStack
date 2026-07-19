@@ -24,12 +24,14 @@ jobs:
           # Only http(s) links: internal file links and anchors are already
           # validated on every pull request by the offline job in
           # validate-docs.yml. 403 and 429 responses are accepted because
-          # some sites block or rate-limit automated clients.
+          # some sites block or rate-limit automated clients. The Traefik URL
+          # is an internal Tunnel origin, not an external documentation link.
           args: >-
             --no-progress
             --scheme https
             --scheme http
             --accept '200..=299,403,429'
+            --exclude '^http://traefik:8080/?$'
             --max-retries 2
             '**/*.md'
           fail: true

@@ -36,7 +36,7 @@ docker compose --env-file unraid/.env \
 
 This **repository-validated** command catches YAML, interpolation, and model errors. No output means the model rendered; it does not test credentials, mounts, image availability, or runtime connectivity.
 
-All seven validation commands are in the [deployment guide](../getting-started/deployment.md#1-validate-the-compose-configuration).
+All six validation commands are in the [deployment guide](../getting-started/deployment.md#1-validate-the-compose-configuration).
 
 If validation reports a missing variable, compare the local file with `.env.example` without replacing real secrets. If a value contains `$`, review Compose env-file quoting rules.
 
@@ -55,7 +55,6 @@ Interpret the result:
 - `unhealthy` means the repeated health command failed, not necessarily that the process exited;
 - `restarting` means the main process keeps exiting;
 - `exited` requires the exit code and logs;
-- a blank health column can be expected: `cloudflare-ddns` has no Compose health check.
 
 A healthy container proves only its local health command. It does not prove public routing, authentication, storage integrity, service integrations, or VPN protection.
 
@@ -162,8 +161,6 @@ nslookup example.com
 nslookup auth.example.com
 ```
 
-The apex and wildcard application names belong to the Tunnel and should not reveal the home public IP. `ddns.example.com` is the separate DDNS record and must not also be a Tunnel route.
-
 If only the apex fails, confirm the explicit apex Tunnel route; `*.example.com` does not match `example.com`. If only subdomains fail, check the wildcard route and DNS record.
 
 ### Cloudflare Tunnel and cloudflared
@@ -251,7 +248,6 @@ Use the relevant guide instead of applying a generic database fix:
 - [Servarr and qBittorrent](../stacks/servarr.md#common-problems)
 - [Monitoring](../stacks/monitoring.md#common-problems)
 - [Plex](../stacks/plex.md#common-problems)
-- [Arcane](../stacks/arcane.md#common-problems)
 
 Do not run a database repair, migration, permissions rewrite, or file rescan copied from an unrelated installation without checking the installed version and official upstream instructions.
 

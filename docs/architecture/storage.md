@@ -27,7 +27,7 @@ Container filesystems and `tmpfs` mounts are disposable. If important data is no
 | Unraid | `APPDATA_PATH` | `/mnt/user/appdata` | Persistent application databases and configuration |
 | Unraid | `HOMELAB_PATH` | `/mnt/remotes/nas-homelab` | NAS-backed media/download tree shared by qBittorrent, Radarr, and Sonarr |
 | Unraid | `CLOUD_PATH` | `/mnt/remotes/nas_cloud` | NAS-backed Nextcloud user-data directory |
-| NAS | `DATA_PATH` | `/volume1/docker` | Persistent Plex and Arcane application data |
+| NAS | `DATA_PATH` | `/volume1/docker` | Persistent Plex application data |
 | NAS | `MEDIA_PATH` | `/volume1/media` | Media library mounted into Plex |
 
 The example paths are not universal. Set them to real existing locations on your hosts.
@@ -45,7 +45,7 @@ The example paths are not universal. Set them to real existing locations on your
 | Authelia | `${APPDATA_PATH}/authelia` | `/data` | SQLite database and authentication state |
 | Vaultwarden | `${APPDATA_PATH}/vaultwarden` | `/data` | SQLite database, attachments, Sends, keys, and possible `config.json` |
 
-Homepage, cloudflared, cloudflare-ddns, and Traefik have no persistent runtime-data directory in their Compose services. Homepage cache and temporary directories use `tmpfs`.
+Homepage, cloudflared, and Traefik have no persistent runtime-data directory in their Compose services. Homepage cache and temporary directories use `tmpfs`.
 
 ### Servarr
 
@@ -107,11 +107,8 @@ Do not copy a live PostgreSQL volume and assume it is a valid database backup. F
 | --- | --- | --- | --- |
 | Plex | `${DATA_PATH}/plex` | `/config` | Database, metadata, preferences, logs, and server identity |
 | Plex | `${MEDIA_PATH}` | `/media` | Media library; read/write in the current Compose file |
-| Arcane | `${DATA_PATH}/arcane` | `/app/data` | Arcane database and persistent state |
 
-Plex also receives `/dev/dri` as a device for hardware acceleration. Arcane mounts `/var/run/docker.sock`. Neither is application data, and neither belongs in a backup.
-
-The Docker socket bind uses `:ro`, but that does not make Docker API operations read-only. Treat Arcane and its access credentials as privileged host-management state.
+Plex also receives `/dev/dri` as a device for hardware acceleration. The device is not application data and does not belong in a backup.
 
 ## Ownership and permissions
 
@@ -121,7 +118,7 @@ Use numeric identities that match the owner or ACL of the host storage:
 | --- | --- |
 | Unraid `UID:GID` | Traefik, Authelia, Vaultwarden, Prometheus, Grafana, Prowlarr environment, Profilarr |
 | Unraid `NAS_UID:NAS_GID` | qBittorrent, Radarr, Sonarr and their shared NAS data |
-| NAS `UID:GID` | Plex and Arcane configuration |
+| NAS `UID:GID` | Plex configuration |
 | Image-selected identity | Seerr and parts of the Nextcloud stack |
 
 Nextcloud explicitly runs Apache as container user `33` and PostgreSQL/Redis as `999`; the Nextcloud application image manages its own runtime identity. The host or NAS ACL must allow the effective application identity to write the intended paths.
@@ -159,7 +156,7 @@ Docker's short bind-mount syntax may create a missing source directory. A contai
 | Nextcloud | `${CLOUD_PATH}`, all five named volumes, and a database-consistent PostgreSQL backup |
 | Servarr | Every relevant `${APPDATA_PATH}` directory; back up `${HOMELAB_PATH}` separately according to the value of downloads and media |
 | Monitoring | `${APPDATA_PATH}/grafana`; `${APPDATA_PATH}/prometheus` if historical metrics matter |
-| NAS applications | `${DATA_PATH}/plex` and `${DATA_PATH}/arcane` with their required secrets and original ownership |
+| NAS applications | `${DATA_PATH}/plex` with its original ownership |
 | Media | `${MEDIA_PATH}` according to its size, replaceability, and recovery requirements |
 | External configuration | Cloudflare Tunnel routes, DNS records, token scopes, and other settings that are not stored in Git |
 
@@ -191,7 +188,6 @@ These normally do not need backup:
 - downloaded container images, provided their exact versions remain available;
 - `/etc/localtime`;
 - `/dev/dri`;
-- `/var/run/docker.sock`;
 - generated container log files unless they are required for a separate audit policy.
 
 Images using `latest` make exact recreation less deterministic. Record the deployed Git commit and image identifiers before upgrades, and back up state before pulling a newer image.

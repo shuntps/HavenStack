@@ -17,6 +17,15 @@ entryPoints:
       insecure: false
       trustedIPs:
         - '10.88.10.0/24'
+    http:
+      encodedCharacters:
+        allowEncodedSlash: false
+        allowEncodedBackSlash: false
+        allowEncodedNullCharacter: false
+        allowEncodedSemicolon: false
+        allowEncodedPercent: false
+        allowEncodedQuestionMark: false
+        allowEncodedHash: false
 
 providers:
   file:

@@ -1,6 +1,6 @@
 # Architecture overview
 
-HavenStack is a collection of Docker Compose stacks split across an Unraid server and a NAS. Unraid runs the public ingress, authentication, applications, media automation, and monitoring services. The NAS provides media storage and runs Plex and Arcane.
+HavenStack is a collection of Docker Compose stacks split across an Unraid server and a NAS. Unraid runs the public ingress, authentication, applications, media automation, and monitoring services. The NAS provides media storage and runs Plex.
 
 The central design rule is simple: Internet traffic enters through Cloudflare Tunnel, reaches one Traefik reverse proxy, and then crosses only the Docker network needed by the selected application.
 
@@ -15,7 +15,6 @@ flowchart LR
 
     subgraph unraid["Unraid host"]
         cloudflared["cloudflared<br/>Tunnel connector"]
-        ddns["Cloudflare DDNS<br/>Dedicated DNS updater"]
         traefik["Traefik<br/>Reverse proxy on :8080"]
         authelia["Authelia<br/>Forward authentication"]
         apps["Apps<br/>Homepage and Vaultwarden"]
@@ -27,12 +26,10 @@ flowchart LR
     subgraph nas["NAS host"]
         storage["Media and cloud storage"]
         plex["Plex"]
-        arcane["Arcane"]
     end
 
     visitor -->|"HTTPS"| cloudflare
     cloudflare <-->|"Encrypted tunnel<br/>initiated from Unraid"| cloudflared
-    ddns -.->|"Updates dedicated<br/>DNS record"| cloudflare
     cloudflared -->|"HTTP :8080<br/>edge_ingress"| traefik
     traefik -.->|"Forward-auth check<br/>on protected routes"| authelia
     traefik --> apps
@@ -42,7 +39,6 @@ flowchart LR
     servarr <-->|"Media files over LAN mounts"| storage
     nextcloud <-->|"Cloud data over LAN mounts"| storage
     storage --> plex
-    arcane -.->|"Manages NAS Docker"| plex
 ```
 
 There is no direct Internet connection to Traefik. The edge Compose stack publishes no host ports: `cloudflared` initiates the connection to Cloudflare, and it reaches Traefik by Docker DNS on `edge_ingress`.
@@ -83,7 +79,6 @@ See [Configure the Cloudflare Tunnel](../getting-started/cloudflare-tunnel.md) f
 | --- | --- | --- |
 | Cloudflare | Cloud | Public DNS, visitor HTTPS, and the external end of the Tunnel |
 | `cloudflared` | Unraid edge stack | Maintains the outbound Tunnel and forwards requests to Traefik |
-| Cloudflare DDNS | Unraid edge stack | Updates a dedicated DNS name with the current public IPv4 address |
 | Traefik | Unraid edge stack | Matches hostnames, applies middleware, and proxies to application containers |
 | Authelia | Unraid edge stack | Authenticates requests for routes that use the forward-auth middleware |
 | Homepage and Vaultwarden | Unraid apps stack | Landing page and password manager |
@@ -91,11 +86,6 @@ See [Configure the Cloudflare Tunnel](../getting-started/cloudflare-tunnel.md) f
 | Servarr applications | Unraid Servarr stack | Media requests, indexing, downloading, and library automation |
 | Prometheus, Grafana, and Blackbox Exporter | Unraid monitoring stack | Metrics collection, dashboards, and endpoint probes |
 | Plex | NAS | Serves the media library using host networking |
-| Arcane | NAS | Manages Docker workloads on the NAS |
-
-Cloudflare DDNS is not in the HavenStack web request path. The example configuration updates `ddns.example.com`, while the Tunnel owns `example.com` and `*.example.com`. The dedicated exact record remains separate from the Tunnel records and can be used by other services that specifically need the current home public IP.
-
-Do not change `CLOUDFLARE_DDNS_DOMAINS` back to the apex or wildcard names. With the current Compose settings, the dedicated DDNS record is not configured as a proxied web origin and may reveal the home public IP. Use it only for an intentional external-access requirement and protect any service reached through it with its own firewall and authentication controls.
 
 ## Docker network layout
 
@@ -111,7 +101,6 @@ Traefik joins several narrowly scoped networks instead of placing every containe
 | `monitoring_backend` | Edge and monitoring services | Metrics and health checks; configured as an internal Docker network |
 | `nextcloud_backend` | Nextcloud containers | Database, Redis, Apache, application, and notify-push communication |
 | `nextcloud_egress` | Nextcloud application | Outbound access required by Nextcloud |
-| `ddns_egress` | Cloudflare DDNS | Outbound DNS update traffic; separate from Tunnel ingress |
 
 Docker provides name resolution only between containers that share a network. This is why:
 
@@ -134,7 +123,7 @@ Use this startup order:
 4. `unraid/servarr`;
 5. `unraid/monitoring`.
 
-The NAS stacks are deployed separately on the NAS because Docker networks do not span the two hosts. Communication between Unraid and the NAS uses LAN addresses and mounted storage rather than shared Docker networks.
+The NAS stack is deployed separately on the NAS because Docker networks do not span the two hosts. Communication between Unraid and the NAS uses LAN addresses and mounted storage rather than shared Docker networks.
 
 ## Authentication boundaries
 
@@ -154,9 +143,7 @@ For the HavenStack web ingress path:
 - the origin's public IP is not used by Tunnel DNS;
 - the tunnel token is the credential that authorizes `cloudflared` to connect.
 
-Plex uses host networking on the NAS, and Arcane binds a port to the NAS LAN address. These are separate LAN exposure decisions and are not automatically routed through the Cloudflare Tunnel. Keep NAS management and application ports blocked from the public Internet unless a separate, intentional access design is added.
-
-Arcane also connects to the NAS Docker socket. The `:ro` bind-mount flag protects the socket file from filesystem changes, but it does not turn the Docker API into a read-only API. Treat access to Arcane as highly privileged access to the NAS host.
+Plex uses host networking on the NAS. This LAN exposure is separate from the Cloudflare Tunnel. Keep its ports blocked from the public Internet unless a separate, intentional access design is added.
 
 ## Failure boundaries
 

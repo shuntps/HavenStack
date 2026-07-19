@@ -65,8 +65,6 @@ Treat the token like a password. Anyone who has it can run a connector for this 
 - Never paste the token into an issue, pull request, screenshot, or log message.
 - If it is exposed, rotate it in Cloudflare and update `unraid/.env` before restarting `cloudflared`.
 
-The tunnel token is not the same as `CLOUDFLARE_DDNS_API_TOKEN`. The tunnel needs only `CLOUDFLARED_TUNNEL_TOKEN` to connect.
-
 ## 3. Add the published application routes
 
 Open the tunnel, find **Published application routes**, and add these rules in this order:
@@ -134,26 +132,6 @@ It does **not** match the apex domain `example.com`. HavenStack serves Homepage 
 
 Do not use `localhost:8080`. From inside the `cloudflared` container, `localhost` refers to `cloudflared` itself, not Traefik.
 
-## Keep the Tunnel and DDNS records separate
-
-Published application routes for exact hostnames create their DNS records automatically; the wildcard record is [created manually](#create-the-wildcard-dns-record). In both cases, these records direct the selected hostnames to the Tunnel, and a changing residential public IP does not need to be published for Tunnel traffic.
-
-HavenStack uses a separate exact hostname for its DDNS updater:
-
-```dotenv
-CLOUDFLARE_DDNS_DOMAINS=ddns.example.com
-```
-
-The Tunnel continues to own `example.com` and `*.example.com`. The exact `ddns.example.com` record is managed independently and takes precedence over the wildcard DNS record. Do not add `ddns.example.com` as another published application route, and do not let the DDNS updater manage the apex or wildcard names.
-
-After the DDNS updater has run successfully, the dedicated record should resemble this example on the Cloudflare DNS records page:
-
-![Cloudflare DNS records page showing ddns.example.com as a DNS-only A record with a documentation IP address](../images/cloudflare-ddns-record.png)
-
-The screenshot uses `192.0.2.10`, an address reserved for documentation. The real record will contain the current public IPv4 address detected by the updater.
-
-The DDNS record is not part of the HavenStack web request path. It publishes the current home IPv4 address for a separate, intentional use and may expose that address publicly.
-
 ## 4. Validate and start the edge stack
 
 First, validate the rendered Compose configuration:
@@ -179,7 +157,7 @@ docker compose --env-file unraid/.env \
   -f unraid/edge/compose.yml ps
 ```
 
-The `cloudflared`, `traefik`, and `authelia` containers should become `healthy`. A container can show `starting` during its health-check grace period; wait about one minute and check again. `cloudflare-ddns` has no Compose health check, so it normally shows `Up` without a health status.
+The `cloudflared`, `traefik`, and `authelia` containers should become `healthy`. A container can show `starting` during its health-check grace period; wait about one minute and check again.
 
 ## 5. Verify the tunnel
 
@@ -196,8 +174,6 @@ Return to the tunnel page and confirm that:
 A healthy tunnel looks like this in the tunnel list:
 
 ![Tunnels list showing the havenstack-unraid tunnel with a cloudflared connector and a green Healthy status](../images/tunnel-healthy.png)
-
-The dedicated `ddns.example.com` record belongs on the Cloudflare DNS records page, not in the Tunnel's published application routes.
 
 ### From a client
 
@@ -280,15 +256,10 @@ A `404` is correct for an unknown hostname. For an expected application, verify 
 2. the request reaches `http://traefik:8080`;
 3. a Traefik router contains the exact `Host(...)` rule.
 
-### The DDNS container reports DNS conflicts
-
-Confirm that `CLOUDFLARE_DDNS_DOMAINS` contains only the dedicated exact hostname, such as `ddns.example.com`. Remove stale DDNS `A` records for the apex or wildcard if they remain from an older configuration, but do not delete the records created for the Tunnel.
-
 ## Security notes
 
 - Keep inbound Internet port forwarding disabled for this ingress path.
 - Keep Traefik's port `8080` unbound from the Unraid host; the Compose file intentionally exposes it only to Docker networks.
-- Treat the dedicated DDNS hostname as public information that may reveal the home public IP.
 - A published Tunnel route makes a hostname reachable from the Internet. Traefik and each application still need the appropriate authentication policy.
 - Rotate the tunnel token immediately if it may have been disclosed.
 - Keep the catch-all rule last.

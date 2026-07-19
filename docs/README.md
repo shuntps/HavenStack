@@ -31,7 +31,6 @@ After the base deployment, use the [stack guide index](stacks/README.md) for det
 - [Servarr](stacks/servarr.md)
 - [Monitoring](stacks/monitoring.md)
 - [Plex](stacks/plex.md)
-- [Arcane](stacks/arcane.md)
 
 ## Operations
 
@@ -51,10 +50,9 @@ After the base deployment, use the [stack guide index](stacks/README.md) for det
 The complete deployment uses:
 
 - an Unraid host for ingress, authentication, private applications, Nextcloud, media automation, and monitoring;
-- a NAS for persistent storage, Plex, and Arcane;
+- a NAS for persistent storage and Plex;
 - a domain managed by Cloudflare;
 - a remotely managed Cloudflare Tunnel for inbound web traffic;
-- a dedicated DDNS hostname, separate from the Tunnel hostnames;
 - a VPN subscription and OpenVPN profile for qBittorrent.
 
 The stacks are modular, but their dependencies still matter. In particular, the Unraid `edge` stack creates the shared Docker networks required by the other Unraid stacks.
@@ -62,7 +60,6 @@ The stacks are modular, but their dependencies still matter. In particular, the 
 ## Safety notes
 
 - Never commit populated `.env` files, passwords, tunnel tokens, VPN profiles, private keys, or `users.yml`.
-- Use a dedicated DDNS name only for services that need the home public IP; never reuse the Tunnel apex or wildcard names.
 - Confirm that remote NAS shares are mounted before starting containers that write to them.
 - Back up configuration, secrets, databases, and application data before an update.
 - Do not run `docker compose down -v` during normal maintenance. The `-v` option removes named volumes and can destroy persistent data.

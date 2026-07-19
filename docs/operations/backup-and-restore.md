@@ -6,7 +6,7 @@ This guide defines what must be protected and a safe order of work. It does not 
 
 ## Command scope
 
-Commands marked **repository-validated** below were checked against all seven Compose files with the example environment files. They validate or control the Compose projects, but they do not prove that an application backup is consistent.
+Commands marked **repository-validated** below were checked against all six Compose files with the example environment files. They validate or control the Compose projects, but they do not prove that an application backup is consistent.
 
 Steps marked **environment-dependent** require a storage- or application-aware procedure selected and tested by the operator. In particular, this guide does not invent PostgreSQL dump or restore commands.
 
@@ -58,9 +58,6 @@ Nextcloud requires special care. This repository manually assembles AIO componen
 | Stack | Persistent data |
 | --- | --- |
 | Plex | `${DATA_PATH}/plex` plus `${MEDIA_PATH}` if the media itself must be protected |
-| Arcane | `${DATA_PATH}/arcane` and the original `ENCRYPTION_KEY` and `JWT_SECRET` |
-
-The Docker socket mounted into Arcane is not backup data. Arcane also does not replace backups of the workloads it manages.
 
 See the individual [stack guides](../stacks/README.md) for application-specific boundaries.
 
@@ -96,10 +93,10 @@ The following sequence intentionally includes downtime. A no-downtime database b
 3. Record the recovery manifest and current health state.
 4. Run any verified application-aware export or database procedure before copying files. Vaultwarden and Nextcloud have additional requirements in their stack guides.
 5. Stop Unraid stacks in reverse dependency order: monitoring, Servarr, Nextcloud, apps, then edge.
-6. On the NAS, stop Plex before making its application-data copy. Stop Arcane before copying Arcane data.
+6. On the NAS, stop Plex before making its application-data copy.
 7. Use the chosen **environment-dependent** backup tool to copy bind-mounted data, named volumes, secrets, and database recovery artifacts.
 8. Verify the backup tool's result and checksums before restarting services.
-9. Start the NAS, restore its storage services, and start or verify Plex and Arcane as required.
+9. Start the NAS, restore its storage services, and start or verify Plex as required.
 10. Confirm the NAS shares are mounted on Unraid.
 11. Start Unraid stacks in dependency order: edge, apps, Nextcloud, Servarr, then monitoring.
 12. Complete functional checks, not only container health checks.
@@ -130,7 +127,7 @@ Stopping a stack makes simple file-based databases and configuration directories
 
 - **Nextcloud:** use a PostgreSQL-aware recovery method and keep it synchronized with `${CLOUD_PATH}` and the matching configuration. A live copy of the PostgreSQL volume alone is not sufficient.
 - **Vaultwarden:** its built-in SQLite backup covers the database, not attachments, Sends, keys, or the rest of `/data`. Follow [the Apps guide](../stacks/apps.md#vaultwarden).
-- **Servarr, Plex, Authelia, Arcane, and Grafana:** stop the writing application or use an upstream-supported application-aware method before copying active databases.
+- **Servarr, Plex, Authelia, and Grafana:** stop the writing application or use an upstream-supported application-aware method before copying active databases.
 - **Prometheus:** its admin snapshot API is not enabled by this Compose file. Stop Prometheus cleanly before a filesystem backup, or deploy and test a supported snapshot procedure first.
 - **Media:** application configuration and media files are separate recovery decisions.
 
@@ -153,7 +150,7 @@ Perform the first restore test in an isolated environment whenever possible. Pre
 11. Verify authentication, files, integrations, VPN routing, public URLs, and monitoring.
 12. Rotate credentials if the recovery event may have exposed secrets.
 
-All seven **repository-validated** configuration checks are listed in the [deployment guide](../getting-started/deployment.md#1-validate-the-compose-configuration).
+All six **repository-validated** configuration checks are listed in the [deployment guide](../getting-started/deployment.md#1-validate-the-compose-configuration).
 
 ## Restore acceptance checklist
 

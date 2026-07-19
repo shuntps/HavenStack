@@ -33,25 +33,6 @@ services:
       start_period: 30s
     logging: *default-logging
 
-  cloudflare-ddns:
-    image: favonia/cloudflare-ddns:1.16.2
-    container_name: cloudflare-ddns
-    restart: unless-stopped
-    mem_limit: 64m
-    read_only: true
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    environment:
-      TZ: ${TZ}
-      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_DDNS_API_TOKEN}
-      DOMAINS: ${CLOUDFLARE_DDNS_DOMAINS}
-      IP6_PROVIDER: none
-    networks:
-      ddns_egress: {}
-    logging: *default-logging
-
   traefik:
     image: traefik:v3.7.8
     container_name: traefik
@@ -66,8 +47,6 @@ services:
     environment:
       TZ: ${TZ}
       DOMAIN: ${DOMAIN}
-      UNRAID_IP: ${UNRAID_IP}
-      NAS_IP: ${NAS_IP}
     volumes:
       - ./config/traefik:/etc/traefik:ro
     tmpfs:
@@ -162,9 +141,3 @@ networks:
     ipam:
       config:
         - subnet: 10.88.60.0/24
-  ddns_egress:
-    driver: bridge
-    name: ddns_egress
-    ipam:
-      config:
-        - subnet: 10.88.70.0/24

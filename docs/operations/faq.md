@@ -51,13 +51,6 @@ It creates the shared Docker networks that the other Unraid stacks declare
 as external; they fail to deploy if the networks do not exist. See
 [Why the edge stack starts first](../architecture/overview.md#why-the-edge-stack-starts-first).
 
-## Why is the DDNS record separate from the Tunnel?
-
-Tunnel hostnames never need the home public IP; the dedicated
-`ddns.example.com` record exists for the rare services that do, and it can
-reveal that IP. Never let DDNS manage the apex or wildcard names. See
-[Keep the Tunnel and DDNS records separate](../getting-started/cloudflare-tunnel.md#keep-the-tunnel-and-ddns-records-separate).
-
 ## Why do qBittorrent, Radarr, and Sonarr share one `/data` mount?
 
 Seeing the same filesystem at the same path enables hardlinks and atomic
@@ -69,13 +62,6 @@ moves instead of slow copies between downloads and the library. See
 Plex relies on discovery and streaming listeners that are simplest to run in
 the NAS network namespace; the trade-off is that every Plex listener becomes
 a NAS host listener. See [NAS networking](../architecture/networking.md#nas-networking).
-
-## Arcane mounts the Docker socket read-only. Is that safe?
-
-The `:ro` flag protects the socket file, not the Docker API: Arcane can
-still perform privileged management operations. Treat Arcane access as
-Docker-administrator access to the NAS. See
-[Host resources and elevated capabilities](../security/exposure-matrix.md#host-resources-and-elevated-capabilities).
 
 ## Why do the Nextcloud images use the `latest` tag?
 

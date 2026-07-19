@@ -10,7 +10,7 @@ Deploy the Unraid stacks in this order because the edge stack creates the shared
 
 | Order | Stack | Main services | Guide |
 | ---: | --- | --- | --- |
-| 1 | Edge | cloudflared, Cloudflare DDNS, Traefik, Authelia | [Edge](edge.md) |
+| 1 | Edge | cloudflared, Traefik, Authelia | [Edge](edge.md) |
 | 2 | Apps | Homepage, Vaultwarden | [Apps](apps.md) |
 | 3 | Nextcloud | Apache, Nextcloud, PostgreSQL, Redis, Notify Push | [Nextcloud](nextcloud.md) |
 | 4 | Servarr | qBittorrent VPN, Prowlarr, Radarr, Sonarr, Seerr, Profilarr | [Servarr](servarr.md) |
@@ -18,14 +18,13 @@ Deploy the Unraid stacks in this order because the edge stack creates the shared
 
 You may omit a stack you do not need. Keep `edge` running while any dependent Unraid stack is running.
 
-## NAS stacks
+## NAS stack
 
-The NAS stacks are independent of the Unraid Docker networks and can be deployed separately.
+The NAS stack is independent of the Unraid Docker networks and can be deployed separately.
 
 | Stack | Main service | Guide |
 | --- | --- | --- |
 | Plex | Media server | [Plex](plex.md) |
-| Arcane | Docker management interface | [Arcane](arcane.md) |
 
 ## Reading a stack guide
 
