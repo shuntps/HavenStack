@@ -15,7 +15,7 @@ Each pull request targeting `main` runs the Compose validation workflow with the
 
 Each pull request targeting `main` also runs the documentation validation workflow. It checks that internal Markdown links and anchors resolve and that image versions pinned in the documentation match the Compose files. When a Dependabot pull request changes an image tag, this check fails until the documentation pages that mention the old version are updated in the same pull request. A separate scheduled workflow checks the external documentation links weekly.
 
-Merging a pull request only changes `main`. Pushing a `v*` tag creates a GitHub Release after the same Compose and documentation validations; it still does not deploy the hosts.
+Merging a pull request only changes `main`. Pushing a semantic-version tag such as `v2.0.0` that points to a commit on `main` creates a GitHub Release after the same Compose and documentation validations; it still does not deploy the hosts.
 
 ## Image version policy in this repository
 

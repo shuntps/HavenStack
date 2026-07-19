@@ -142,6 +142,8 @@ Traefik reads its static configuration from `unraid/edge/config/traefik/traefik.
 
 The `web` entry point listens on container port `8080`. Separate internal entry points expose health on `8082` and Prometheus metrics on `8084`. The dashboard is enabled but insecure dashboard mode is disabled.
 
+The `web` entry point rejects encoded reserved characters in request paths. This prevents Traefik and an application from decoding a path differently and bypassing a path-specific rule such as the protected Vaultwarden `/admin` router. Do not relax these settings without reviewing every public backend against Traefik's [encoded-character security guidance](https://doc.traefik.io/traefik/reference/install-configuration/entrypoints/#encoded-characters).
+
 Common middlewares provide:
 
 - Authelia ForwardAuth;
