@@ -14,7 +14,7 @@ The container has a `1g` memory limit, a restart policy of `unless-stopped`, and
 
 Plex is independent of the Unraid Docker networks and can be deployed before or after the Unraid stacks. Prepare:
 
-- Docker Engine and Docker Compose v2 on the NAS;
+- Docker Engine and the current Docker Compose plugin on the NAS;
 - a populated `nas/.env`;
 - a stable `NAS_IP`;
 - `${DATA_PATH}/plex` with enough space for Plex metadata and databases;

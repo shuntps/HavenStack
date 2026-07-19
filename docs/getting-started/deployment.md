@@ -251,7 +251,7 @@ Then retry the dependent stack.
 
 ### Docker reports an overlapping network range
 
-The configured `10.88.x.0/24` or `10.68.10.0/24` range conflicts with another Docker, LAN, or VPN network. Resolve the subnet plan before starting the stacks. If you change `servarr_backend`, also review `LAN_NETWORK` because qBittorrent must permit that backend network.
+The configured `10.88.x.0/24` range conflicts with another Docker, LAN, or VPN network. Resolve the subnet plan before starting the stacks. If you change `servarr_backend`, also review `LAN_NETWORK` because qBittorrent must permit that backend network.
 
 ### `permission denied` or a container cannot write data
 

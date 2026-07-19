@@ -9,12 +9,17 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  validate-compose:
     uses: ./.github/workflows/validate-compose.yml
+
+  validate-docs:
+    uses: ./.github/workflows/validate-docs.yml
 
   release:
     name: Create release
-    needs: validate
+    needs:
+      - validate-compose
+      - validate-docs
     runs-on: ubuntu-latest
     permissions:
       contents: write

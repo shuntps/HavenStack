@@ -48,7 +48,7 @@ Do not count the live NAS share itself as a backup.
 
 ## Docker and command-line access
 
-Install Docker Engine and the Docker Compose **v2 plugin** on both hosts. HavenStack uses the `docker compose` command with a space, not the retired `docker-compose` v1 command.
+Install Docker Engine and the current Docker Compose plugin on both hosts. HavenStack uses the `docker compose` command with a space, not the retired `docker-compose` v1 command.
 
 Verify each host:
 
@@ -57,7 +57,7 @@ docker version
 docker compose version
 ```
 
-The second command should report `Docker Compose version v2...`. The account used for deployment must be allowed to talk to the Docker daemon. Avoid making the Docker socket broadly writable to solve a permission problem.
+Both commands must succeed. Docker Compose may report a newer major version than the original v2 plugin; newer releases are expected to work but are not verified automatically at runtime. The account used for deployment must be allowed to talk to the Docker daemon. Avoid making the Docker socket broadly writable to solve a permission problem.
 
 You also need:
 
