@@ -42,7 +42,7 @@ services:
     logging: *default-logging
 
   vaultwarden:
-    image: vaultwarden/server:1.36.0
+    image: vaultwarden/server:1.37.0
     container_name: vaultwarden
     restart: unless-stopped
     mem_limit: 256m

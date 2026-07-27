@@ -60,7 +60,7 @@ services:
     logging: *default-logging
 
   prowlarr:
-    image: linuxserver/prowlarr:2.4.0
+    image: linuxserver/prowlarr:2.5.2
     container_name: prowlarr
     restart: unless-stopped
     mem_limit: 256m
