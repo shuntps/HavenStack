@@ -76,7 +76,7 @@ services:
     logging: *default-logging
 
   grafana:
-    image: grafana/grafana:13.1.0
+    image: grafana/grafana:13.1.1
     container_name: grafana
     restart: unless-stopped
     mem_limit: 768m
