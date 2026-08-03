@@ -9,7 +9,7 @@ x-logging: &default-logging
 
 services:
   prometheus:
-    image: prom/prometheus:v3.13.1
+    image: prom/prometheus:v3.13.2
     container_name: prometheus
     restart: unless-stopped
     mem_limit: 512m
