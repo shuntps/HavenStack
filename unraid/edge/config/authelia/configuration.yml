@@ -19,11 +19,6 @@ ntp:
    disable_startup_check: false
    disable_failure: false
 
-telemetry:
-   metrics:
-      enabled: true
-      address: 'tcp://:9959/metrics'
-
 totp:
    disable: false
    issuer: '{{ env "DOMAIN" }}'
@@ -85,14 +80,6 @@ access_control:
         policy: 'two_factor'
 
       - domain: 'traefik.{{ env "DOMAIN" }}'
-        policy: 'deny'
-
-      - domain: 'grafana.{{ env "DOMAIN" }}'
-        subject:
-           - 'group:admins'
-        policy: 'two_factor'
-
-      - domain: 'grafana.{{ env "DOMAIN" }}'
         policy: 'deny'
 
       - domain: 'qbittorrent.{{ env "DOMAIN" }}'

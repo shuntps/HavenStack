@@ -8,9 +8,6 @@ entryPoints:
    health:
       address: ':8082/tcp'
 
-   metrics:
-      address: ':8084/tcp'
-
    web:
       address: ':8080/tcp'
       forwardedHeaders:
@@ -34,14 +31,6 @@ providers:
 
 ping:
    entryPoint: 'health'
-
-metrics:
-   addInternals: true
-   prometheus:
-      entryPoint: 'metrics'
-      addEntryPointsLabels: true
-      addRoutersLabels: true
-      addServicesLabels: true
 
 api:
    dashboard: true
