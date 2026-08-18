@@ -28,13 +28,7 @@ jobs:
             -f unraid/apps/compose.yml config --quiet
 
           docker compose --env-file unraid/.env.example \
-            -f unraid/nextcloud/compose.yml config --quiet
-
-          docker compose --env-file unraid/.env.example \
             -f unraid/servarr/compose.yml config --quiet
-
-          docker compose --env-file unraid/.env.example \
-            -f unraid/monitoring/compose.yml config --quiet
 
           docker compose --env-file nas/.env.example \
             -f nas/plex/compose.yml config --quiet

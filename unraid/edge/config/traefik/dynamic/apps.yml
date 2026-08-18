@@ -37,14 +37,6 @@ http:
         - 'rate-limit@file'
         - 'security-headers@file'
 
-    nextcloud:
-      rule: 'Host(`cloud.{{ env "DOMAIN" }}`)'
-      entryPoints:
-        - 'web'
-      service: 'nextcloud@file'
-      middlewares:
-        - 'security-headers@file'
-
   services:
     homepage:
       loadBalancer:
@@ -60,13 +52,4 @@ http:
           - url: 'http://vaultwarden:8080/'
         healthCheck:
           path: '/alive'
-          interval: '30s'
-
-    nextcloud:
-      loadBalancer:
-        servers:
-          - url: 'http://nextcloud-aio-apache:11000/'
-        healthCheck:
-          path: '/status.php'
-          hostname: 'cloud.{{ env "DOMAIN" }}'
           interval: '30s'

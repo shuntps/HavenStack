@@ -17,9 +17,7 @@ updates:
     directories:
       - "/unraid/edge"
       - "/unraid/apps"
-      - "/unraid/nextcloud"
       - "/unraid/servarr"
-      - "/unraid/monitoring"
       - "/nas/plex"
       - "/nas/arcane"
     schedule:
