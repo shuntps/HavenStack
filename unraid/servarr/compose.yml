@@ -174,7 +174,7 @@ services:
     networks:
       servarr_backend: {}
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:6868/api/v1/health"]
+      test: ["CMD-SHELL", "[ \"$$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:6868/api/v1/health)\" = \"200\" ]"]
       interval: 1m
       timeout: 10s
       retries: 3
