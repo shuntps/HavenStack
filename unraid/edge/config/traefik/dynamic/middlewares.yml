@@ -1,0 +1,32 @@
+http:
+  middlewares:
+    authelia:
+      forwardAuth:
+        address: 'http://authelia:9091/api/authz/forward-auth'
+        trustForwardHeader: true
+        maxResponseBodySize: 8192
+        authResponseHeaders:
+          - 'Remote-User'
+          - 'Remote-Groups'
+          - 'Remote-Name'
+          - 'Remote-Email'
+
+    security-headers:
+      headers:
+        contentTypeNosniff: true
+        referrerPolicy: 'strict-origin-when-cross-origin'
+        customFrameOptionsValue: 'SAMEORIGIN'
+
+    redirect-www:
+      redirectRegex:
+        regex: '^https?://www\.{{ env "DOMAIN" | replace "." "\\." }}/(.*)'
+        replacement: 'https://{{ env "DOMAIN" }}/${1}'
+        permanent: true
+
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+        sourceCriterion:
+          ipStrategy:
+            depth: 1

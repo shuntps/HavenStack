@@ -1,0 +1,29 @@
+http:
+  routers:
+    traefik:
+      rule: 'Host(`traefik.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'api@internal'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+        - 'authelia@file'
+
+    authelia:
+      rule: 'Host(`auth.{{ env "DOMAIN" }}`)'
+      entryPoints:
+        - 'web'
+      service: 'authelia@file'
+      middlewares:
+        - 'rate-limit@file'
+        - 'security-headers@file'
+
+  services:
+    authelia:
+      loadBalancer:
+        servers:
+          - url: 'http://authelia:9091/'
+        healthCheck:
+          path: '/api/health'
+          interval: '30s'
