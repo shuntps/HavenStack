@@ -153,8 +153,8 @@ Vaultwarden's `/admin` protection is deliberately layered: a `priority: 100` rou
 | `${DOMAIN}`, `www.` | Homepage | Public; `www` redirects to the apex |
 | `auth.` | Authelia | Public (login portal, `bypass`) |
 | `vault.` | Vaultwarden | Public; `/admin` requires two factor + `group:admins` |
-| `seerr.`, `unraid.`, `nas.` | Seerr, Unraid and NAS web UIs | Authelia one factor |
-| `traefik.`, `qbittorrent.`, `prowlarr.`, `radarr.`, `sonarr.`, `profilarr.` | Admin surfaces | Authelia two factor, `group:admins` only |
+| `seerr.` | Seerr | Authelia one factor (deliberate: not an admin surface) |
+| `traefik.`, `unraid.`, `nas.`, `qbittorrent.`, `prowlarr.`, `radarr.`, `sonarr.`, `profilarr.` | Admin surfaces | Authelia two factor, `group:admins` only |
 
 Plex runs on the NAS host network and Arcane binds to `${NAS_IP}:3552`; neither is published through the tunnel.
 
