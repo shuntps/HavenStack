@@ -134,6 +134,22 @@ access_control:
       - domain: 'profilarr.{{ env "DOMAIN" }}'
         policy: 'deny'
 
+      - domain: 'unraid.{{ env "DOMAIN" }}'
+        subject:
+           - 'group:admins'
+        policy: 'two_factor'
+
+      - domain: 'unraid.{{ env "DOMAIN" }}'
+        policy: 'deny'
+
+      - domain: 'nas.{{ env "DOMAIN" }}'
+        subject:
+           - 'group:admins'
+        policy: 'two_factor'
+
+      - domain: 'nas.{{ env "DOMAIN" }}'
+        policy: 'deny'
+
       - domain: '*.{{ env "DOMAIN" }}'
         policy: 'one_factor'
 
