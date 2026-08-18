@@ -1,0 +1,7 @@
+# Variables whose empty value is legitimate.
+#
+# One name per line. A variable listed here is exempt from both the "missing"
+# and the "empty" check in check-env-templates.sh.
+#
+# Empty on purpose: every variable referenced by a compose file currently has a
+# documented placeholder in the matching .env.example.
