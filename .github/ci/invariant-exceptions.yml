@@ -1,0 +1,18 @@
+# Documented exceptions to the CI invariants.
+#
+# Every entry must carry a justification. An empty list is meaningful: it says
+# the invariant currently holds everywhere with no waiver.
+
+auth:
+  # Traefik routers that attach authelia@file but deliberately have no dedicated
+  # access_control rule, and therefore fall through to the `*.${DOMAIN}`
+  # one_factor catch-all.
+  intentional_one_factor:
+    # User-facing media request portal. Authenticated, but not an admin surface:
+    # it grants no control over the host or over other services.
+    - seerr
+
+  # two_factor rules deliberately not followed by a matching deny rule.
+  # Intentionally empty: the deny is what stops the one_factor catch-all from
+  # downgrading an admin surface, so its absence is always a defect.
+  allow_unpaired_two_factor: []

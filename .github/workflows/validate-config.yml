@@ -1,0 +1,61 @@
+name: Validate service configs
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Pinned so both workflows resolve the same parser; a floating install
+  # could change YAML behaviour under the invariant checks without notice.
+  PYYAML_VERSION: '6.0.3'
+
+jobs:
+  authelia:
+    name: Validate Authelia config
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # users.yml is gitignored and therefore absent in CI. validate-config does
+      # not require the identity file to exist, so nothing is stubbed here on
+      # purpose: generating a fake users.yml would validate a file that is not
+      # the one deployed.
+      - name: Validate with authelia validate-config
+        run: |
+          image=$(docker compose --env-file unraid/.env.example \
+            -f unraid/edge/compose.yml config --format json \
+            | jq -r '.services.authelia.image')
+          echo "Validating against ${image}"
+          docker run --rm --env-file unraid/.env.example \
+            -v "${PWD}/unraid/edge/config/authelia:/config:ro" "${image}" \
+            authelia validate-config \
+              --config /config/configuration.yml \
+              --config.experimental.filters template
+
+  traefik:
+    name: Check Traefik dynamic references
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install PyYAML
+        run: |
+          python3 -m pip install --quiet --disable-pip-version-check "pyyaml==${PYYAML_VERSION}" \
+            || python3 -m pip install --quiet --disable-pip-version-check --break-system-packages "pyyaml==${PYYAML_VERSION}"
+
+      # The renderer validates itself before it is trusted to render anything.
+      - name: Self-test the template renderer
+        run: python3 .github/ci/test_render_templates.py
+
+      - name: Check Traefik dynamic references
+        run: python3 .github/ci/check-traefik-refs.py

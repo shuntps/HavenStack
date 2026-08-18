@@ -1,0 +1,33 @@
+name: Check invariants
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Pinned so both workflows resolve the same parser; a floating install
+  # could change YAML behaviour under the invariant checks without notice.
+  PYYAML_VERSION: '6.0.3'
+
+jobs:
+  auth:
+    name: Check auth invariants
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install PyYAML
+        run: |
+          python3 -m pip install --quiet --disable-pip-version-check "pyyaml==${PYYAML_VERSION}" \
+            || python3 -m pip install --quiet --disable-pip-version-check --break-system-packages "pyyaml==${PYYAML_VERSION}"
+
+      - name: Check Traefik and Authelia agree on what is protected
+        run: python3 .github/ci/check-auth-invariants.py

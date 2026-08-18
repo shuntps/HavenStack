@@ -35,3 +35,16 @@ jobs:
 
           docker compose --env-file nas/.env.example \
             -f nas/arcane/compose.yml config --quiet
+
+  env-templates:
+    name: Validate env templates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # `docker compose config` exits 0 on an unset variable, interpolating a
+      # blank string, so parsing alone cannot catch an incomplete template.
+      - name: Check for missing or empty variables
+        run: .github/ci/check-env-templates.sh

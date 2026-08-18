@@ -36,5 +36,10 @@ notification.txt
 logs/
 *.log
 
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
 # Local agent context
 CLAUDE.md
