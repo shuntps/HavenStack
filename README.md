@@ -115,7 +115,7 @@ A new stack must be added to `.github/workflows/validate-compose.yml` and to `.g
 
 ### Networks
 
-`unraid/edge/compose.yml` is the single owner of the seven shared networks, each pinned to a `/24` under `10.88.0.0/16`.
+`unraid/edge/compose.yml` is the single owner of the eight shared networks, each pinned to a `/24` under `10.88.0.0/16`.
 
 | Network | Subnet | Internal | Reaches |
 | --- | --- | --- | --- |
@@ -124,10 +124,13 @@ A new stack must be added to `.github/workflows/validate-compose.yml` and to `.g
 | `apps_backend` | 10.88.30.0/24 | no | vaultwarden |
 | `servarr_backend` | 10.88.40.0/24 | no | all servarr services |
 | `homepage_backend` | 10.88.50.0/24 | yes | homepage |
+| `lan_egress` | 10.88.60.0/24 | no | traefik → Unraid/NAS web UIs on the LAN |
 | `ddns_egress` | 10.88.70.0/24 | no | cloudflare-ddns → internet |
 | `auth_egress` | 10.88.80.0/24 | no | authelia → NTP/internet |
 
 Subnets are pinned, not incidental: `LAN_NETWORK` lists `10.88.40.0/24` so the qBittorrent VPN kill switch permits traffic from the Servarr backend, and Traefik trusts forwarded headers only from `10.88.10.0/24`. Changing a subnet means updating both.
+
+Every container attached to more than one non-`internal` network pins its default route with `gw_priority: 1` — Authelia through `auth_egress`, Traefik through `lan_egress`, which it needs to reach the LAN web UIs declared in `external.yml`. Left unset, Docker chooses the gateway itself and that choice would change silently if a network were renamed or removed.
 
 ### Ingress
 
