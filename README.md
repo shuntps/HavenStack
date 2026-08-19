@@ -39,7 +39,8 @@ This repository contains only declarative configuration: compose files and the s
 HavenStack/
 ├── .github/
 │   ├── assets/          # README images
-│   ├── workflows/validate-compose.yml
+│   ├── ci/              # invariant checks + invariant-exceptions.yml
+│   ├── workflows/       # validate-compose, validate-config, check-invariants, lint
 │   └── dependabot.yml
 ├── unraid/
 │   ├── .env.example
@@ -109,6 +110,25 @@ docker compose --env-file nas/.env.example -f nas/plex/compose.yml config --quie
 docker compose --env-file nas/.env.example -f nas/arcane/compose.yml config --quiet
 ```
 
+`docker compose config` exits 0 on an unset variable and checks nothing across files, so four further checks live in `.github/ci/` and run on the same pull requests:
+
+| Check | What it catches |
+| --- | --- |
+| `check-env-templates.sh` | a variable a compose file interpolates that is missing from, or empty in, the matching `.env.example` |
+| `check-traefik-refs.py` | a router pointing at a service or middleware that no dynamic file defines |
+| `check-auth-invariants.py` | Traefik and Authelia disagreeing about what is protected — a broken `two_factor`/`deny` pair, a policy never consulted, a route silently downgraded to one factor |
+| `check-hardening-invariants.py` | a service that misses the hardening baseline without a documented waiver, or a waiver that is no longer needed |
+
+```bash
+.github/ci/check-env-templates.sh
+python3 .github/ci/test_render_templates.py
+python3 .github/ci/check-traefik-refs.py
+python3 .github/ci/check-auth-invariants.py
+python3 .github/ci/check-hardening-invariants.py
+```
+
+Exceptions to either invariant set live in `.github/ci/invariant-exceptions.yml` and must carry a justification. A stale waiver fails the build just as an undocumented gap does, so the file cannot drift away from reality.
+
 A new stack must be added to `.github/workflows/validate-compose.yml` and to `.github/dependabot.yml`.
 
 ## Architecture
@@ -165,7 +185,7 @@ Plex runs on the NAS host network and Arcane binds to `${NAS_IP}:3552`; neither 
 
 ## Conventions
 
-**Hardening baseline.** Nearly every service carries a pinned image tag, `restart: unless-stopped`, `mem_limit`, `read_only: true`, `cap_drop: [ALL]`, `security_opt: [no-new-privileges:true]`, a healthcheck against `127.0.0.1`, and the shared `x-logging` anchor. Documented exceptions, which should not be "fixed": linuxserver images (`prowlarr`, `radarr`, `sonarr`, `plex`) need root for s6 init; `qbittorrent` needs `cap_add: NET_ADMIN` for the VPN tunnel; `arcane` tracks `latest` and mounts the Docker socket read-only.
+**Hardening baseline.** Nearly every service carries a pinned image tag, `restart: unless-stopped`, `mem_limit`, `read_only: true`, `cap_drop: [ALL]`, `security_opt: [no-new-privileges:true]`, a healthcheck against `127.0.0.1`, and the shared `x-logging` anchor. Documented exceptions, which should not be "fixed": linuxserver images (`prowlarr`, `radarr`, `sonarr`, `plex`) need root for s6 init; `qbittorrent` needs `cap_add: NET_ADMIN` for the VPN tunnel; `arcane` tracks `latest` and mounts the Docker socket read-only; `cloudflare-ddns` carries no healthcheck because its `FROM scratch` image ships only `/bin/ddns` and CA certificates — no shell to probe with, no HTTP endpoint, and the binary ignores arguments, so it reports liveness outbound (`HEALTHCHECKS`/`UPTIMEKUMA`) or not at all.
 
 **Media mounts** use a single `${HOMELAB_PATH}:/data:rslave` root rather than per-category mounts, so atomic moves and hardlinks work between download and library directories.
 
