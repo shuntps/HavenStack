@@ -4,6 +4,17 @@ on:
   pull_request:
     branches:
       - main
+
+  # Rebase merges put commits on main that no pull_request run ever saw, and a
+  # release tag can then point at a commit carrying no recorded verdict. Running
+  # on the push closes that gap from both ends: every commit that lands on main,
+  # and every v* tag, gets its own result attached to its own ref.
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
   workflow_call:
   workflow_dispatch:
 

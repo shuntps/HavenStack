@@ -100,7 +100,7 @@ docker compose --env-file unraid/.env -f unraid/servarr/compose.yml logs -f sona
 
 ## Validation
 
-CI validates every stack against the `.env.example` templates on pull requests to `main`. Run the same check locally:
+CI validates every stack against the `.env.example` templates on pull requests to `main`, on every commit that lands on `main`, and on every `v*` tag — so a release always carries its own recorded verdict. Run the same check locally:
 
 ```bash
 docker compose --env-file unraid/.env.example -f unraid/edge/compose.yml config --quiet
@@ -110,7 +110,7 @@ docker compose --env-file nas/.env.example -f nas/plex/compose.yml config --quie
 docker compose --env-file nas/.env.example -f nas/arcane/compose.yml config --quiet
 ```
 
-`docker compose config` exits 0 on an unset variable and checks nothing across files, so four further checks live in `.github/ci/` and run on the same pull requests — plus the template renderer's own self-test, which runs first because both Traefik checks depend on it:
+`docker compose config` exits 0 on an unset variable and checks nothing across files, so four further checks live in `.github/ci/` and run on the same events — plus the template renderer's own self-test, which runs first because both Traefik checks depend on it:
 
 | Check | What it catches |
 | --- | --- |
