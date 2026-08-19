@@ -133,6 +133,8 @@ Subnets are pinned, not incidental: `LAN_NETWORK` lists `10.88.40.0/24` so the q
 
 Cloudflare Tunnel → Traefik → service. `cloudflared` dials out and TLS terminates at Cloudflare, so Traefik's only routing entrypoint (`web`, `:8080`) speaks plain HTTP; `:8082` serves ping for the container healthcheck.
 
+Rate limiting is keyed on `CF-Connecting-IP` rather than on an `X-Forwarded-For` `ipStrategy` depth. Cloudflare overwrites that header at its edge with a single client address that cannot be spoofed, while an XFF depth has to assume how many entries `cloudflared` leaves in the chain — assume wrong and every visitor shares one bucket, which looks identical to a working limit until one active client starts returning 429 for everyone.
+
 Traefik has **no Docker socket**. It is file-provider only, watching `unraid/edge/config/traefik/dynamic/`, so routers and services are hand-written per file and grouped by target stack (`apps.yml`, `servarr.yml`, `edge.yml`, and `external.yml` for non-container backends such as the Unraid and NAS web UIs). Those files are Go templates — `{{ env "DOMAIN" }}`, `{{ env "NAS_IP" }}` — resolved from the env vars declared on the Traefik service, so a new template variable must also be added there.
 
 ### Authentication
