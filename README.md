@@ -131,6 +131,20 @@ Exceptions to either invariant set live in `.github/ci/invariant-exceptions.yml`
 
 A new stack must be added to `.github/workflows/validate-compose.yml` and to `.github/dependabot.yml`.
 
+## Releases
+
+Cut automatically. Merging to `main` re-runs the full suite; only if it is green does a release happen, and only if something under `unraid/` or `nas/` changed — documentation and CI commits produce no version because they change nothing deployable.
+
+The version follows Conventional Commits, read as deployment impact rather than API compatibility:
+
+| Bump | Meaning | Typical cause |
+| --- | --- | --- |
+| major | a manual step is required before deploying | a new variable, a network to recreate, data to move |
+| minor | a new service or capability | a stack gains a service |
+| patch | nothing to do but pull and restart | a Dependabot batch |
+
+Release notes lead with the image diff against the previous tag and the exact `docker compose` commands for the stacks that changed, so the note is also the deployment checklist. [`CHANGELOG.md`](CHANGELOG.md) records every version and is written by CI.
+
 ## Architecture
 
 ### Networks

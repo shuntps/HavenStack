@@ -1,0 +1,89 @@
+name: Release
+
+# Runs on every push to main, but only tags when something deployable changed.
+# release.py owns that decision; see its docstring.
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+# Two merges landing close together must not race for the same version number.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # The full suite is re-run here rather than trusted from the pull request:
+  # merges are rebases, so the commit on main is a new SHA that no pull_request
+  # run ever saw. `needs` below makes a red suite mean the tag is never created,
+  # rather than created and then found to be broken.
+  compose:
+    uses: ./.github/workflows/validate-compose.yml
+  config:
+    uses: ./.github/workflows/validate-config.yml
+  invariants:
+    uses: ./.github/workflows/check-invariants.yml
+  lint:
+    uses: ./.github/workflows/lint.yml
+
+  release:
+    name: Tag and publish
+    needs:
+      - compose
+      - config
+      - invariants
+      - lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          # Tags and full history are what the version decision reads.
+          fetch-depth: 0
+
+      - name: Decide whether this warrants a release
+        id: decide
+        run: |
+          python3 .github/ci/release.py --emit "${RUNNER_TEMP}/release"
+          if [ -f "${RUNNER_TEMP}/release/VERSION" ]; then
+            echo "version=$(cat "${RUNNER_TEMP}/release/VERSION")" >> "$GITHUB_OUTPUT"
+          fi
+
+      # The tag points at the commit the suite above validated, and at nothing
+      # else. The changelog is committed afterwards, so the tagged tree is
+      # exactly the tree that was proven green.
+      - name: Tag the verified commit
+        if: steps.decide.outputs.version
+        env:
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "$VERSION" -m "$VERSION"
+          git push origin "$VERSION"
+
+      - name: Publish the release
+        if: steps.decide.outputs.version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: |
+          gh release create "$VERSION" \
+            --title "$VERSION" \
+            --notes-file "${RUNNER_TEMP}/release/NOTES.md" \
+            --verify-tag
+
+      # Lands after the tag on purpose. `[skip ci]` is belt and braces: a push
+      # made with GITHUB_TOKEN does not start a workflow run anyway.
+      - name: Record the release in CHANGELOG.md
+        if: steps.decide.outputs.version
+        env:
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: |
+          git add CHANGELOG.md
+          git commit -m "chore(release): record ${VERSION} in the changelog [skip ci]"
+          git push origin HEAD:main
