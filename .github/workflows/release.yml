@@ -44,6 +44,13 @@ jobs:
         with:
           # Tags and full history are what the version decision reads.
           fetch-depth: 0
+          # RELEASE_TOKEN is a fine-grained PAT with contents:write. It exists
+          # for one reason: the changelog commit lands on main, and a branch
+          # ruleset cannot grant a bypass to GITHUB_TOKEN on a personal
+          # repository. Falling back to github.token keeps tagging and
+          # publishing working if the PAT is missing or has expired — only the
+          # changelog step then fails, and it fails loudly.
+          token: ${{ secrets.RELEASE_TOKEN || github.token }}
 
       - name: Decide whether this warrants a release
         id: decide
@@ -77,8 +84,9 @@ jobs:
             --notes-file "${RUNNER_TEMP}/release/NOTES.md" \
             --verify-tag
 
-      # Lands after the tag on purpose. `[skip ci]` is belt and braces: a push
-      # made with GITHUB_TOKEN does not start a workflow run anyway.
+      # Lands after the tag on purpose. `[skip ci]` is load-bearing here: unlike
+      # GITHUB_TOKEN, a push made with a PAT *does* start a workflow run, and
+      # without it this commit would trigger release.yml again.
       - name: Record the release in CHANGELOG.md
         if: steps.decide.outputs.version
         env:
