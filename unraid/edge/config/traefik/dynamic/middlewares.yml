@@ -23,10 +23,17 @@ http:
         replacement: 'https://{{ env "DOMAIN" }}/${1}'
         permanent: true
 
+    # Buckets are keyed on CF-Connecting-IP, not on X-Forwarded-For. Cloudflare
+    # overwrites CF-Connecting-IP at its edge with the true client address — a
+    # single value, never a list — and no host port is published, so nothing
+    # reaches this entrypoint except through the tunnel and the header cannot be
+    # spoofed. An ipStrategy depth would instead have to guess how many entries
+    # cloudflared leaves in X-Forwarded-For; guessing wrong keys every client to
+    # the proxy's own address, silently turning a per-client limit into a single
+    # global one that one active visitor can exhaust for everyone.
     rate-limit:
       rateLimit:
         average: 100
         burst: 50
         sourceCriterion:
-          ipStrategy:
-            depth: 1
+          requestHeaderName: 'Cf-Connecting-Ip'
