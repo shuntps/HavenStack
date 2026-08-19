@@ -16,3 +16,40 @@ auth:
   # Intentionally empty: the deny is what stops the one_factor catch-all from
   # downgrading an admin surface, so its absence is always a defect.
   allow_unpaired_two_factor: []
+
+hardening:
+  # Services deliberately shipped without a `healthcheck:`.
+  no_healthcheck:
+    # FROM scratch image: it ships only /bin/ddns and CA certificates, so there
+    # is no shell and no utility to probe with, the binary exposes no HTTP
+    # endpoint, and it ignores every argument — any CMD would start a second
+    # updater against the Cloudflare API once per interval. The image reports
+    # liveness outbound instead (HEALTHCHECKS / UPTIMEKUMA), which needs a
+    # monitor this deployment does not run.
+    - cloudflare-ddns
+
+  # Services that cannot run with `read_only: true` and `cap_drop: [ALL]`.
+  writable_rootfs:
+    # linuxserver images: s6-overlay init writes across the root filesystem and
+    # drops privileges itself, so it needs to start as root with capabilities.
+    - prowlarr
+    - radarr
+    - sonarr
+    - plex
+    # binhex image: builds the VPN tunnel itself, which needs NET_ADMIN, and
+    # writes its OpenVPN state to the root filesystem.
+    - qbittorrent
+    # Manages the Docker daemon and writes its own runtime state; hardening the
+    # root filesystem here would be cosmetic next to the socket it already
+    # holds. See the note on the socket mount in the README.
+    - arcane
+
+  # Images deliberately not pinned to a version tag.
+  unpinned_image:
+    # Upstream publishes no stable version tags at present.
+    - arcane
+
+  # Intentionally not configurable: `mem_limit`, `restart: unless-stopped`,
+  # `security_opt: [no-new-privileges:true]` and the shared json-file logging
+  # anchor hold for every service in every stack, with no waiver. A service that
+  # cannot meet them does not belong in this deployment.

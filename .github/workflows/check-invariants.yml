@@ -31,3 +31,22 @@ jobs:
 
       - name: Check Traefik and Authelia agree on what is protected
         run: python3 .github/ci/check-auth-invariants.py
+
+  hardening:
+    name: Check hardening invariants
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install PyYAML
+        run: |
+          python3 -m pip install --quiet --disable-pip-version-check "pyyaml==${PYYAML_VERSION}" \
+            || python3 -m pip install --quiet --disable-pip-version-check --break-system-packages "pyyaml==${PYYAML_VERSION}"
+
+      # Services are read through `docker compose config`, so anchors, merge
+      # keys and .env.example interpolation resolve exactly as they will on the
+      # host. This needs no running daemon, only the Compose CLI.
+      - name: Check the hardening baseline and its documented waivers
+        run: python3 .github/ci/check-hardening-invariants.py

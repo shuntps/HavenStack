@@ -48,6 +48,13 @@ services:
          IP6_PROVIDER: none
       networks:
          ddns_egress: {}
+      # No healthcheck. The image is built FROM scratch and ships only
+      # /bin/ddns plus CA certificates: there is no shell and no utility to
+      # probe with, the binary exposes no HTTP endpoint, and it ignores every
+      # argument, so any CMD would launch a second updater against the
+      # Cloudflare API once per interval. The image reports liveness outbound
+      # instead, through the HEALTHCHECKS or UPTIMEKUMA variables, which needs
+      # a monitor this deployment does not currently run.
       logging: *default-logging
 
    traefik:
