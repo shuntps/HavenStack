@@ -145,6 +145,8 @@ The version follows Conventional Commits, read as deployment impact rather than 
 
 Release notes lead with the image diff against the previous tag and the exact `docker compose` commands for the stacks that changed, so the note is also the deployment checklist. [`CHANGELOG.md`](CHANGELOG.md) records every version and is written by CI.
 
+Recording the release in `CHANGELOG.md` means committing to `main`, which the branch ruleset forbids and which cannot be waived for `GITHUB_TOKEN` on a personal account. That one step therefore uses a `RELEASE_TOKEN` secret. Tagging and publishing do not depend on it: branch rules do not cover tags, so those keep working even if the token lapses.
+
 ## Architecture
 
 ### Networks
