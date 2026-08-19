@@ -8,6 +8,35 @@ The tag for a version points at the commit the CI suite validated. This file is
 written immediately afterwards, so on `main` it always runs one commit ahead of
 the release it describes.
 
+## v1.1.0 — 2026-08-19
+
+### Images
+
+No image changed in this release.
+
+### Redeploy
+
+```bash
+docker compose --env-file nas/.env -f nas/arcane/compose.yml up -d
+```
+
+### Changes
+
+#### New capabilities
+
+- **ci**: cut releases automatically when the deployment changes (03435ca)
+
+#### Refactoring
+
+- **arcane**: declare the compose project name explicitly (e73d60a)
+
+#### CI
+
+- run every workflow on main pushes and v* tags (a0fde5d)
+- **release**: push the changelog with RELEASE_TOKEN (d555b4e)
+
+**Full diff**: https://github.com/shuntps/HavenStack/compare/v1.0.0...v1.1.0
+
 ## v1.0.0 — 2026-08-19
 
 First tagged state of HavenStack. Everything up to here was tracked in git but
