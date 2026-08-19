@@ -76,6 +76,13 @@ services:
          apps_backend: {}
          servarr_backend: {}
          homepage_backend: {}
+         # Explicit default route. Traefik must reach the Unraid and NAS web UIs
+         # on the LAN (see dynamic/external.yml). Without gw_priority, Docker
+         # picks the gateway itself from among the non-internal networks above,
+         # so that egress path would silently change if one were renamed or
+         # removed. Mirrors what authelia does with auth_egress.
+         lan_egress:
+            gw_priority: 1
       healthcheck:
          test: ['CMD', 'traefik', 'healthcheck', '--ping']
          interval: 1m
@@ -154,6 +161,12 @@ networks:
       ipam:
          config:
             - subnet: 10.88.50.0/24
+   lan_egress:
+      driver: bridge
+      name: lan_egress
+      ipam:
+         config:
+            - subnet: 10.88.60.0/24
    ddns_egress:
       driver: bridge
       name: ddns_egress
