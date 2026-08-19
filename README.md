@@ -110,7 +110,7 @@ docker compose --env-file nas/.env.example -f nas/plex/compose.yml config --quie
 docker compose --env-file nas/.env.example -f nas/arcane/compose.yml config --quiet
 ```
 
-`docker compose config` exits 0 on an unset variable and checks nothing across files, so four further checks live in `.github/ci/` and run on the same pull requests:
+`docker compose config` exits 0 on an unset variable and checks nothing across files, so four further checks live in `.github/ci/` and run on the same pull requests — plus the template renderer's own self-test, which runs first because both Traefik checks depend on it:
 
 | Check | What it catches |
 | --- | --- |
@@ -199,7 +199,8 @@ Plex runs on the NAS host network and Arcane binds to `${NAS_IP}:3552`; neither 
 2. Router and service (with a `healthCheck`) in the matching `unraid/edge/config/traefik/dynamic/*.yml`.
 3. Authelia `access_control` rules — the `two_factor`/`deny` pair for admin surfaces.
 4. Any new env vars in `unraid/.env.example` (or `nas/.env.example`) *and* in the Traefik or Authelia `environment:` block if templates reference them.
-5. New stack only: add it to `.github/workflows/validate-compose.yml` and `.github/dependabot.yml`.
+5. If the service cannot meet the hardening baseline, waive it in `.github/ci/invariant-exceptions.yml` with a justification — CI fails on an undocumented gap *and* on a waiver that is no longer needed.
+6. New stack only: add it to `.github/workflows/validate-compose.yml` and `.github/dependabot.yml`.
 
 ## License
 
