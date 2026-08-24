@@ -58,7 +58,7 @@ services:
       logging: *default-logging
 
    traefik:
-      image: traefik:v3.7.10
+      image: traefik:v3.7.11
       container_name: traefik
       restart: unless-stopped
       mem_limit: 256m
