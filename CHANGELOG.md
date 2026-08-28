@@ -8,6 +8,30 @@ The tag for a version points at the commit the CI suite validated. This file is
 written immediately afterwards, so on `main` it always runs one commit ahead of
 the release it describes.
 
+## v1.1.1 — 2026-08-24
+
+### Images
+
+| Stack | Image | From | To |
+| --- | --- | --- | --- |
+| `unraid/edge` | `traefik` | `v3.7.10` | `v3.7.11` |
+
+### Redeploy
+
+```bash
+docker compose --env-file unraid/.env -f unraid/edge/compose.yml up -d
+```
+
+`unraid/edge` is listed first because it is the only stack that defines the shared networks.
+
+### Changes
+
+#### Dependencies and chores
+
+- **deps**: bump traefik (3bb01a0)
+
+**Full diff**: https://github.com/shuntps/HavenStack/compare/v1.1.0...v1.1.1
+
 ## v1.1.0 — 2026-08-19
 
 ### Images
